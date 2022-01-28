@@ -112,7 +112,7 @@ def getFacilityDetails(cfg):
     vorlaufBeiPlus10 = data['userMenus'][1]['topView'][4]['parameter']
     aktuellerVorlauf = data['userMenus'][1]['listView'][0]
     outAirTemp = data['userMenus'][1]['listView'][2]
-    warmwasserIst = data['userMenus'][2]['topView'][1]['parameter']
+    warmwasserIst = data['userMenus'][2]['topView'][0]['parameter']
     warmwasserSoll = data['userMenus'][2]['topView'][1]['parameter']
     kollektorTemp = data['userMenus'][4]['topView'][1]['parameter']
     kollektorPumpe = data['userMenus'][4]['topView'][0]['parameter']
