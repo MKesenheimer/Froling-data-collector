@@ -142,7 +142,7 @@ def getFacilityDetails(cfg):
         "Puffer Ladezustand [{}]".format(pufferLadezustand['unitLabel']),
         "Puffer Pumpe [%]".format(pufferPumpeAnsteuerung['unitLabel']),
         "Kollektor [{}]".format(kollektorTemp['unitLabel']),
-        "Kollektorpumpe [{}]".format(kollektorPumpe['unitLabel']),
+        "Kollektor Pumpe [{}]".format(kollektorPumpe['unitLabel']),
         "Pelletverbrauch [{}]".format(kgCounter['unitLabel'])]
 
     now = datetime.datetime.now()
