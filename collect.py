@@ -106,39 +106,61 @@ def getFacilityDetails(cfg):
     ruecklaufTempAbschalten = data['userMenus'][6]['topView'][2]
 
     # relevante Grössen
-    istTemp = data['userMenus'][0]['listView'][0]
+    facilityState = data['userMenus'][0]['topView'][9]['parameter']
+    boilerIstTemp = data['userMenus'][0]['listView'][0]
+    kesselEinAus = data['userMenus'][0]['topView'][8]['parameter']
     kgCounter = data['userMenus'][5]['listView'][1]
     vorlaufBeiMinus10 = data['userMenus'][1]['topView'][3]['parameter']
     vorlaufBeiPlus10 = data['userMenus'][1]['topView'][4]['parameter']
     aktuellerVorlauf = data['userMenus'][1]['listView'][0]
+    hkpumpeAktiv = data['userMenus'][1]['topView'][1]['parameter']
     outAirTemp = data['userMenus'][1]['listView'][2]
     warmwasserIst = data['userMenus'][2]['topView'][1]['parameter']
     warmwasserSoll = data['userMenus'][2]['topView'][1]['parameter']
+    pufferLadezustand = data['userMenus'][3]['topView'][1]['parameter']
+    pufferPumpeAnsteuerung = data['userMenus'][3]['topView'][3]['parameter']
+    pufferfuehlerOben = data['userMenus'][3]['topView'][5]['parameter']
+    pufferfuehlerUnten = data['userMenus'][3]['topView'][6]['parameter']
     kollektorTemp = data['userMenus'][4]['topView'][1]['parameter']
     kollektorPumpe = data['userMenus'][4]['topView'][0]['parameter']
     #print(kollektorPumpe)
 
     # Header
-    header = ["Datum/Uhrzeit","Boiler Ist [{}]".format(istTemp['unitLabel']),
+    header = ["Datum/Uhrzeit",
+        "Status",
+        "Boiler Ist [{}]".format(boilerIstTemp['unitLabel']),
+        #"Boiler An/Aus",
         "HK Vorlauf bei -10°C [{}]".format(vorlaufBeiMinus10['unitLabel']),
         "HK Vorlauf bei +10°C [{}]".format(vorlaufBeiMinus10['unitLabel']),
         "HK Vorlauf ist [{}]".format(aktuellerVorlauf['unitLabel']),
+        "HK Pumpe [%]",
         "Aussentemperatur [{}]".format(outAirTemp['unitLabel']),
         "Warmwasser Ist [{}]".format(warmwasserIst['unitLabel']),
         "Warmwasser Soll [{}]".format(warmwasserSoll['unitLabel']),
+        "Puffer Fuehler oben [{}]".format(pufferfuehlerOben['unitLabel']),
+        "Puffer Fuehler unten [{}]".format(pufferfuehlerUnten['unitLabel']),
+        "Puffer Ladezustand [{}]".format(pufferLadezustand['unitLabel']),
+        "Puffer Pumpe [%]".format(pufferPumpeAnsteuerung['unitLabel']),
         "Kollektor [{}]".format(kollektorTemp['unitLabel']),
         "Kollektorpumpe [{}]".format(kollektorPumpe['unitLabel']),
         "Pelletverbrauch [{}]".format(kgCounter['unitLabel'])]
 
     now = datetime.datetime.now()
     values = [now.strftime("%Y-%m-%d %H:%M:%S"),
-            istTemp['valueText'], 
+            facilityState['valueText'],
+            boilerIstTemp['valueText'],
+            #kesselEinAus['valueText'],
             vorlaufBeiMinus10['valueText'],
             vorlaufBeiPlus10['valueText'],
             aktuellerVorlauf['valueText'],
+            str(int(hkpumpeAktiv['valueText']) * 100),
             outAirTemp['valueText'],
             warmwasserIst['valueText'],
             warmwasserSoll['valueText'],
+            pufferfuehlerOben['valueText'],
+            pufferfuehlerUnten['valueText'],
+            pufferLadezustand['valueText'],
+            pufferPumpeAnsteuerung['valueText'],
             kollektorTemp['valueText'],
             kollektorPumpe['valueText'],
             kgCounter['valueText']]
