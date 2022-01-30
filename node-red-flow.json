@@ -1,0 +1,385 @@
+[
+    {
+        "id": "bf404480.3cc8f8",
+        "type": "tab",
+        "label": "Froling Data",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "93224ee6.01a31",
+        "type": "file in",
+        "z": "bf404480.3cc8f8",
+        "name": "input file",
+        "filename": "/home/pi/Froling-data-collector/data.csv",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "x": 160,
+        "y": 200,
+        "wires": [
+            [
+                "18e0237d.190ead"
+            ]
+        ]
+    },
+    {
+        "id": "18e0237d.190ead",
+        "type": "csv",
+        "z": "bf404480.3cc8f8",
+        "name": "",
+        "sep": ",",
+        "hdrin": true,
+        "hdrout": "none",
+        "multi": "mult",
+        "ret": "\\n",
+        "temp": "",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": false,
+        "include_null_values": false,
+        "x": 330,
+        "y": 200,
+        "wires": [
+            [
+                "73215be6.8d15e4"
+            ]
+        ]
+    },
+    {
+        "id": "de8f8a17.0366e",
+        "type": "debug",
+        "z": "bf404480.3cc8f8",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 590,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "54a1aab.9bdf654",
+        "type": "ui_chart",
+        "z": "bf404480.3cc8f8",
+        "name": "",
+        "group": "fbe55673.66dd98",
+        "order": 1,
+        "width": "10",
+        "height": "7",
+        "label": "Temperaturen",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "dd HH:mm",
+        "interpolate": "cubic",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "100",
+        "removeOlderUnit": "86400",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#f94144",
+            "#f3722c",
+            "#f8961e",
+            "#f9844a",
+            "#f9c74f",
+            "#90be6d",
+            "#43aa8b",
+            "#4d908e",
+            "#577590"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "x": 740,
+        "y": 220,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "73215be6.8d15e4",
+        "type": "function",
+        "z": "bf404480.3cc8f8",
+        "name": "build graph",
+        "func": "var payload = msg.payload;\n\n// consumptions\nvar c1 = [];\n\n// temperatures\nvar t1 = [];\nvar t2 = [];\nvar t3 = [];\nvar t4 = [];\nvar t5 = [];\nvar t6 = [];\nvar t7 = [];\n\n// pumps\nvar p1 = [];\nvar p2 = [];\n\nvar maxvalues = 100;\nvar min = Math.max(0, payload.length - maxvalues);\n\nfor (let i = min; i < payload.length; i++) {\n  var timestamp = Date.parse(payload[i][\"Datum/Uhrzeit\"]);\n  var kgpelletverbrauch = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Pelletverbrauch [kg]\"]) + parseInt(payload[i][\"Pelletverbrauch [t]\"]) * 1000};\n  \n  var boilerIst = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Boiler Ist [°C]\"])};\n  var hkvorlaufIst = {\"x\":timestamp, \"y\":parseInt(payload[i][\"HK Vorlauf ist [°C]\"])};\n  var aussentemp = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Aussentemperatur [°C]\"])};\n  var warmwasserIst = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Warmwasser Ist [°C]\"])};\n  var pufferFuehlerOben = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Puffer Fuehler oben [°C]\"])};\n  var pufferFuehlerUnten = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Puffer Fuehler unten [°C]\"])};\n  var kollektorIst = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Kollektor [°C]\"])};\n  var kollektorPumpe = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Kollektor Pumpe [%]\"])};\n  var pufferPumpe = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Puffer Pumpe [%]\"])};\n  \n  c1.push(kgpelletverbrauch);\n  \n  t1.push(boilerIst);\n  t2.push(hkvorlaufIst);\n  t3.push(aussentemp);\n  t4.push(warmwasserIst);\n  t5.push(pufferFuehlerOben);\n  t6.push(pufferFuehlerUnten);\n  t7.push(kollektorIst);\n  \n  p1.push(kollektorPumpe);\n  p2.push(pufferPumpe);\n}\n\nvar msg1 = {payload:\"\"};\nvar msg2 = {payload:\"\"};\nvar msg3 = {payload:\"\"};\n\nmsg1.payload = [{\"series\":\"Pelletverbrauch [kg]\", \n                \"data\":[c1], \n                \"labels\": \"Pelletverbrauch [kg]\"}];\n                \nmsg2.payload = [{\"series\":[\"Boiler Ist [°C]\", \"HK Vorlauf ist [°C]\", \"Aussentemperatur [°C]\", \"Warmwasser Ist [°C]\", \"Puffer Fuehler oben [°C]\", \"Puffer Fuehler unten [°C]\", \"Kollektor [°C]\"], \n                \"data\":[t1, t2, t3, t4, t5, t6, t7], \n                \"labels\": [\"Boiler Ist [°C]\", \"HK Vorlauf ist [°C]\", \"Aussentemperatur [°C]\", \"Warmwasser Ist [°C]\", \"Puffer Fuehler oben [°C]\", \"Puffer Fuehler unten [°C]\", \"Kollektor [°C]\"]}];\n\nmsg3.payload = [{\"series\":[\"Kollektor Pumpe [%]\", \"Puffer Pumpe [%]\"], \n                \"data\":[p1, p2], \n                \"labels\": [\"Kollektor Pumpe [%]\", \"Puffer Pumpe [%]\"]}];\n\n// Momentanwerte\npufferLadezustand = parseInt(payload[payload.length - 1][\"Puffer Ladezustand [%]\"]);\nsystemStatus = payload[payload.length - 1][\"Status\"]\n\nvar msg4 = {payload:pufferLadezustand};\nvar msg5 = {payload:systemStatus};\n\n\nreturn [msg1, msg2, msg3, msg4, msg5];",
+        "outputs": 5,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 490,
+        "y": 200,
+        "wires": [
+            [
+                "de8f8a17.0366e",
+                "48df41aa.a59b9"
+            ],
+            [
+                "de8f8a17.0366e",
+                "54a1aab.9bdf654"
+            ],
+            [
+                "bf1586a9.f0ecd8",
+                "de8f8a17.0366e"
+            ],
+            [
+                "3074bec9.95edb2",
+                "de8f8a17.0366e"
+            ],
+            [
+                "a5b3584d.25ac68",
+                "de8f8a17.0366e"
+            ]
+        ]
+    },
+    {
+        "id": "48df41aa.a59b9",
+        "type": "ui_chart",
+        "z": "bf404480.3cc8f8",
+        "name": "",
+        "group": "9793c2cd.ca2b5",
+        "order": 1,
+        "width": "10",
+        "height": "7",
+        "label": "Pelletverbrauch [kg]",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "dd HH:mm",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "86400",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#277da1",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "x": 760,
+        "y": 160,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "1613205f.90318",
+        "type": "watch",
+        "z": "bf404480.3cc8f8",
+        "name": "",
+        "files": "/home/pi/Froling-data-collector/data.csv",
+        "recursive": "",
+        "x": 240,
+        "y": 60,
+        "wires": [
+            [
+                "93224ee6.01a31"
+            ]
+        ]
+    },
+    {
+        "id": "12f7c33b.0dffbd",
+        "type": "ui_template",
+        "z": "bf404480.3cc8f8",
+        "group": "fbe55673.66dd98",
+        "name": "",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "format": "<style>\n[aria-label~=\"Froling Parameter\"] {\n    background-color: var(--main-color,green);\n}\n</style>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "global",
+        "x": 240,
+        "y": 300,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "50dc17f1.fbae5",
+        "type": "inject",
+        "z": "bf404480.3cc8f8",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 460,
+        "wires": [
+            [
+                "93224ee6.01a31"
+            ]
+        ]
+    },
+    {
+        "id": "bf1586a9.f0ecd8",
+        "type": "ui_chart",
+        "z": "bf404480.3cc8f8",
+        "name": "",
+        "group": "b0f85a15.3dcea",
+        "order": 1,
+        "width": "10",
+        "height": "7",
+        "label": "Pumpen",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "dd HH:mm",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "86400",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#277da1",
+            "#577590",
+            "#4d908e",
+            "#43aa8b",
+            "#90be6d",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "x": 720,
+        "y": 280,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "3074bec9.95edb2",
+        "type": "ui_gauge",
+        "z": "bf404480.3cc8f8",
+        "name": "",
+        "group": "a98bf70.d130808",
+        "order": 0,
+        "width": "10",
+        "height": "7",
+        "gtype": "gage",
+        "title": "Puffer Ladezustand",
+        "label": "%",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#f94144",
+            "#f9c74f",
+            "#43aa8b"
+        ],
+        "seg1": "33",
+        "seg2": "66",
+        "x": 760,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "a5b3584d.25ac68",
+        "type": "ui_text",
+        "z": "bf404480.3cc8f8",
+        "group": "a98bf70.d130808",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Systemstatus",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "x": 740,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "fbe55673.66dd98",
+        "type": "ui_group",
+        "name": "Temperaturen",
+        "tab": "4382be31.14017",
+        "order": 1,
+        "disp": false,
+        "width": "10",
+        "collapse": false
+    },
+    {
+        "id": "9793c2cd.ca2b5",
+        "type": "ui_group",
+        "name": "Verbrauch",
+        "tab": "4382be31.14017",
+        "order": 7,
+        "disp": false,
+        "width": "10",
+        "collapse": false
+    },
+    {
+        "id": "b0f85a15.3dcea",
+        "type": "ui_group",
+        "name": "Pumpen",
+        "tab": "4382be31.14017",
+        "order": 3,
+        "disp": false,
+        "width": "11",
+        "collapse": false
+    },
+    {
+        "id": "a98bf70.d130808",
+        "type": "ui_group",
+        "name": "Status",
+        "tab": "4382be31.14017",
+        "order": 4,
+        "disp": false,
+        "width": "10",
+        "collapse": false
+    },
+    {
+        "id": "4382be31.14017",
+        "type": "ui_tab",
+        "name": "Froling Parameter",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    }
+]
