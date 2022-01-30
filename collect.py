@@ -110,6 +110,7 @@ def getFacilityDetails(cfg):
     boilerIstTemp = data['userMenus'][0]['listView'][0]
     kesselEinAus = data['userMenus'][0]['topView'][8]['parameter']
     kgCounter = data['userMenus'][5]['listView'][1]
+    tCounter = data['userMenus'][5]['listView'][2]
     vorlaufBeiMinus10 = data['userMenus'][1]['topView'][3]['parameter']
     vorlaufBeiPlus10 = data['userMenus'][1]['topView'][4]['parameter']
     aktuellerVorlauf = data['userMenus'][1]['listView'][0]
@@ -143,7 +144,8 @@ def getFacilityDetails(cfg):
         "Puffer Pumpe [%]".format(pufferPumpeAnsteuerung['unitLabel']),
         "Kollektor [{}]".format(kollektorTemp['unitLabel']),
         "Kollektor Pumpe [{}]".format(kollektorPumpe['unitLabel']),
-        "Pelletverbrauch [{}]".format(kgCounter['unitLabel'])]
+        "Pelletverbrauch [{}]".format(kgCounter['unitLabel']),
+        "Pelletverbrauch [{}]".format(tCounter['unitLabel'])]
 
     now = datetime.datetime.now()
     values = [now.strftime("%Y-%m-%d %H:%M:%S"),
@@ -163,7 +165,8 @@ def getFacilityDetails(cfg):
             pufferPumpeAnsteuerung['valueText'],
             kollektorTemp['valueText'],
             kollektorPumpe['valueText'],
-            kgCounter['valueText']]
+            kgCounter['valueText'],
+            tCounter['valueText']]
 
     return Status.SUCCESS, header, values
 
