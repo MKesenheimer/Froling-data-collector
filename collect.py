@@ -115,7 +115,7 @@ def getFacilityDetails(cfg):
     aktuellerVorlauf = data['userMenus'][1]['listView'][0]
     hkpumpeAktiv = data['userMenus'][1]['topView'][1]['parameter']
     outAirTemp = data['userMenus'][1]['listView'][2]
-    warmwasserIst = data['userMenus'][2]['topView'][1]['parameter']
+    warmwasserIst = data['userMenus'][2]['topView'][0]['parameter']
     warmwasserSoll = data['userMenus'][2]['topView'][1]['parameter']
     pufferLadezustand = data['userMenus'][3]['topView'][1]['parameter']
     pufferPumpeAnsteuerung = data['userMenus'][3]['topView'][3]['parameter']
