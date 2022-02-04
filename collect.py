@@ -106,7 +106,8 @@ def getFacilityDetails(cfg):
     ruecklaufTempAbschalten = data['userMenus'][6]['topView'][2]
 
     # relevante Grössen
-    facilityState = data['userMenus'][0]['topView'][9]['parameter']
+    #facilityState = data['userMenus'][0]['topView'][9]['parameter']
+    boilerState = data['userMenus'][0]['topView'][6]['parameter']
     boilerIstTemp = data['userMenus'][0]['listView'][0]
     kesselEinAus = data['userMenus'][0]['topView'][8]['parameter']
     kgCounter = data['userMenus'][5]['listView'][1]
@@ -149,7 +150,7 @@ def getFacilityDetails(cfg):
 
     now = datetime.datetime.now()
     values = [now.strftime("%Y-%m-%d %H:%M:%S"),
-            facilityState['valueText'],
+            boilerState['valueText'],
             boilerIstTemp['valueText'],
             #kesselEinAus['valueText'],
             vorlaufBeiMinus10['valueText'],
