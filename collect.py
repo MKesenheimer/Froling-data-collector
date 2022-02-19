@@ -12,6 +12,7 @@ __prog_name__ = 'Froling data collector'
 __version__ = 0.1
 
 class Status(Enum):
+    ERROR = 2,
     LOGIN_FAILED = 1,
     SUCCESS = 0
 
@@ -50,7 +51,10 @@ def getFacilityDetails(cfg):
         return Status.LOGIN_FAILED, [], []
 
     #print("response = {}".format(response.content))
-    data = response.json()
+    try:
+      data = response.json()
+    except:
+      return Status.ERROR, [], []
 
     # TODO: Diese Zuordnung ist individuell für die Anlage.
     # TODO: Die Zuordnung sollte dynamisch geschehen, ggf. mit einer Schleife alle Keys durchgehen
@@ -211,9 +215,9 @@ def main():
     print(",".join(header))
 
     while True:
+        status, header, data = getFacilityDetails(cfg)
         if status == Status.LOGIN_FAILED:
             login(cfg)
-        status, header, data = getFacilityDetails(cfg)
         #collectedData += [data]
         #print(tabulate([data],headers=header))
         print(",".join(data))
