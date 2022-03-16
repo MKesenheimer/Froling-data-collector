@@ -3,3 +3,5 @@ run.sh
 bearer.txt
 *.csv
 *.json
+*.log
+process.id
