@@ -45,7 +45,11 @@ def getFacilityDetails(cfg):
 
     url = "https://connect-api.froeling.com:443/app/v1.0/resources/facility/getFacilityDetails/41641"
     headers = {"Connection": "close", "Accept": "*/*", "User-Agent": "Froeling PROD/2107.1 (com.froeling.connect-ios; build:2107.1.01; iOS 15.2.1) Alamofire/4.8.1", "Accept-Language": "en", "Accept-Encoding": "gzip, deflate", 'Authorization': bearer}
-    response = requests.get(url, headers=headers)
+    
+    try:
+      response = requests.get(url, headers=headers)
+    except:
+      return Status.ERROR, [], []
 
     if "security check failed" in str(response.content) or len(str(response.content)) == 0:
         return Status.LOGIN_FAILED, [], []
