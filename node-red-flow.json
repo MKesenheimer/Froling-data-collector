@@ -1,406 +1,51 @@
 [
-  {
-      "id": "bf404480.3cc8f8",
-      "type": "tab",
-      "label": "Froling Data",
-      "disabled": false,
-      "info": ""
-  },
-  {
-      "id": "93224ee6.01a31",
-      "type": "file in",
-      "z": "bf404480.3cc8f8",
-      "name": "input file",
-      "filename": "/home/pi/Froling-data-collector/data.csv",
-      "format": "utf8",
-      "chunk": false,
-      "sendError": false,
-      "encoding": "none",
-      "x": 160,
-      "y": 200,
-      "wires": [
-          [
-              "18e0237d.190ead"
-          ]
-      ]
-  },
-  {
-      "id": "18e0237d.190ead",
-      "type": "csv",
-      "z": "bf404480.3cc8f8",
-      "name": "",
-      "sep": ",",
-      "hdrin": true,
-      "hdrout": "none",
-      "multi": "mult",
-      "ret": "\\n",
-      "temp": "",
-      "skip": "0",
-      "strings": true,
-      "include_empty_strings": false,
-      "include_null_values": false,
-      "x": 330,
-      "y": 200,
-      "wires": [
-          [
-              "73215be6.8d15e4"
-          ]
-      ]
-  },
-  {
-      "id": "de8f8a17.0366e",
-      "type": "debug",
-      "z": "bf404480.3cc8f8",
-      "name": "",
-      "active": true,
-      "tosidebar": true,
-      "console": false,
-      "tostatus": false,
-      "complete": "payload",
-      "targetType": "msg",
-      "statusVal": "",
-      "statusType": "auto",
-      "x": 590,
-      "y": 60,
-      "wires": []
-  },
-  {
-      "id": "54a1aab.9bdf654",
-      "type": "ui_chart",
-      "z": "bf404480.3cc8f8",
-      "name": "",
-      "group": "fbe55673.66dd98",
-      "order": 1,
-      "width": "10",
-      "height": "7",
-      "label": "Temperaturen",
-      "chartType": "line",
-      "legend": "true",
-      "xformat": "dd HH:mm",
-      "interpolate": "cubic",
-      "nodata": "",
-      "dot": false,
-      "ymin": "",
-      "ymax": "",
-      "removeOlder": 1,
-      "removeOlderPoints": "200",
-      "removeOlderUnit": "86400",
-      "cutout": 0,
-      "useOneColor": false,
-      "useUTC": false,
-      "colors": [
-          "#f94144",
-          "#f3722c",
-          "#f8961e",
-          "#f9844a",
-          "#f9c74f",
-          "#90be6d",
-          "#43aa8b",
-          "#4d908e",
-          "#577590"
-      ],
-      "outputs": 1,
-      "useDifferentColor": false,
-      "x": 740,
-      "y": 220,
-      "wires": [
-          []
-      ]
-  },
-  {
-      "id": "73215be6.8d15e4",
-      "type": "function",
-      "z": "bf404480.3cc8f8",
-      "name": "build graph",
-      "func": "var payload = msg.payload;\nvar debug = [];\n\n// consumptions\nvar c1 = [];\n\n// temperatures\nvar t1 = [];\nvar t2 = [];\nvar t3 = [];\nvar t4 = [];\nvar t5 = [];\nvar t6 = [];\nvar t7 = [];\n\n// pumps\nvar p1 = [];\nvar p2 = [];\n\nvar maxvalues = 504; // one week if one datapoint every 20min\nvar min = Math.max(0, payload.length - maxvalues);\n//debug.push({\"min\": min});\n\n\nfor (let i = min; i < payload.length; i++) {\n  var timestamp = Date.parse(payload[i][\"Datum/Uhrzeit\"]);\n  \n  // extract the consumption per day\n  // derivative of moving average\n  var t = 24;\n  var d = 7;\n  var twindow = 60 * 60 * 1000 * t * d; // time window: one day\n  var prev = timestamp - twindow;\n  index = 0;\n  for (let j = i; j >= 0; j--) {\n    var prevtimestamp = Date.parse(payload[j][\"Datum/Uhrzeit\"]);\n    if (prevtimestamp < prev) {\n        index = j;\n        break;\n    }\n  }\n  \n  //debug.push({\"timestamp\":timestamp,\"prevtimestamp\":prevtimestamp, \"index\":i, \"previous index\":index});\n  \n  var prevconsumption = parseInt(payload[index][\"Pelletverbrauch [kg]\"]) + parseInt(payload[index][\"Pelletverbrauch [t]\"]) * 1000;\n  var nowconsumption = parseInt(payload[i][\"Pelletverbrauch [kg]\"]) + parseInt(payload[i][\"Pelletverbrauch [t]\"]) * 1000;\n  var consumptionPerTime = (nowconsumption - prevconsumption) / d;\n  \n  var kgpelletverbrauch = {\"x\":timestamp, \"y\":(consumptionPerTime)};\n  var boilerIst = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Boiler Ist [°C]\"])};\n  var hkvorlaufIst = {\"x\":timestamp, \"y\":parseInt(payload[i][\"HK Vorlauf ist [°C]\"])};\n  var aussentemp = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Aussentemperatur [°C]\"])};\n  var warmwasserIst = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Warmwasser Ist [°C]\"])};\n  var pufferFuehlerOben = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Puffer Fuehler oben [°C]\"])};\n  var pufferFuehlerUnten = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Puffer Fuehler unten [°C]\"])};\n  var kollektorIst = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Kollektor [°C]\"])};\n  var kollektorPumpe = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Kollektor Pumpe [%]\"])};\n  var pufferPumpe = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Puffer Pumpe [%]\"])};\n  \n  c1.push(kgpelletverbrauch);\n  \n  t1.push(boilerIst);\n  t2.push(hkvorlaufIst);\n  t3.push(aussentemp);\n  t4.push(warmwasserIst);\n  t5.push(pufferFuehlerOben);\n  t6.push(pufferFuehlerUnten);\n  t7.push(kollektorIst);\n  \n  p1.push(kollektorPumpe);\n  p2.push(pufferPumpe);\n}\n\nvar msg1 = {payload:\"\"};\nvar msg2 = {payload:\"\"};\nvar msg3 = {payload:\"\"};\n\nmsg1.payload = [{\"series\":\"Pelletverbrauch [kg]\", \n                \"data\":[c1], \n                \"labels\": \"Pelletverbrauch [kg]\"}];\n                \nmsg2.payload = [{\"series\":[\"Boiler Ist [°C]\", \"HK Vorlauf ist [°C]\", \"Aussentemperatur [°C]\", \"Warmwasser Ist [°C]\", \"Puffer Fuehler oben [°C]\", \"Puffer Fuehler unten [°C]\", \"Kollektor [°C]\"], \n                \"data\":[t1, t2, t3, t4, t5, t6, t7], \n                \"labels\": [\"Boiler Ist [°C]\", \"HK Vorlauf ist [°C]\", \"Aussentemperatur [°C]\", \"Warmwasser Ist [°C]\", \"Puffer Fuehler oben [°C]\", \"Puffer Fuehler unten [°C]\", \"Kollektor [°C]\"]}];\n\nmsg3.payload = [{\"series\":[\"Kollektor Pumpe [%]\", \"Puffer Pumpe [%]\"], \n                \"data\":[p1, p2], \n                \"labels\": [\"Kollektor Pumpe [%]\", \"Puffer Pumpe [%]\"]}];\n\n// Momentanwerte\npufferLadezustand = parseInt(payload[payload.length - 1][\"Puffer Ladezustand [%]\"]);\nsystemStatus = payload[payload.length - 1][\"Status\"]\npelletzaehler = nowconsumption;\n\nvar msg4 = {payload:pufferLadezustand};\nvar msg5 = {payload:systemStatus};\nvar msg6 = {payload:pelletzaehler + \" kg\"};\n\nvar msg_debug = {payload:debug}\n\nreturn [msg1, msg2, msg3, msg4, msg5, msg6];",
-      "outputs": 6,
-      "noerr": 0,
-      "initialize": "",
-      "finalize": "",
-      "x": 490,
-      "y": 200,
-      "wires": [
-          [
-              "de8f8a17.0366e",
-              "48df41aa.a59b9"
-          ],
-          [
-              "de8f8a17.0366e",
-              "54a1aab.9bdf654"
-          ],
-          [
-              "bf1586a9.f0ecd8",
-              "de8f8a17.0366e"
-          ],
-          [
-              "3074bec9.95edb2",
-              "de8f8a17.0366e"
-          ],
-          [
-              "a5b3584d.25ac68",
-              "de8f8a17.0366e"
-          ],
-          [
-              "de8f8a17.0366e",
-              "f348c208.c17cb8"
-          ]
-      ]
-  },
-  {
-      "id": "48df41aa.a59b9",
-      "type": "ui_chart",
-      "z": "bf404480.3cc8f8",
-      "name": "",
-      "group": "9793c2cd.ca2b5",
-      "order": 1,
-      "width": "10",
-      "height": "7",
-      "label": "Pelletverbrauch [kg/d]",
-      "chartType": "line",
-      "legend": "false",
-      "xformat": "dd HH:mm",
-      "interpolate": "monotone",
-      "nodata": "",
-      "dot": false,
-      "ymin": "0",
-      "ymax": "",
-      "removeOlder": 1,
-      "removeOlderPoints": "400",
-      "removeOlderUnit": "86400",
-      "cutout": 0,
-      "useOneColor": false,
-      "useUTC": false,
-      "colors": [
-          "#277da1",
-          "#aec7e8",
-          "#ff7f0e",
-          "#2ca02c",
-          "#98df8a",
-          "#d62728",
-          "#ff9896",
-          "#9467bd",
-          "#c5b0d5"
-      ],
-      "outputs": 1,
-      "useDifferentColor": false,
-      "x": 760,
-      "y": 160,
-      "wires": [
-          []
-      ]
-  },
-  {
-      "id": "1613205f.90318",
-      "type": "watch",
-      "z": "bf404480.3cc8f8",
-      "name": "",
-      "files": "/home/pi/Froling-data-collector/data.csv",
-      "recursive": "",
-      "x": 240,
-      "y": 60,
-      "wires": [
-          [
-              "93224ee6.01a31"
-          ]
-      ]
-  },
-  {
-      "id": "12f7c33b.0dffbd",
-      "type": "ui_template",
-      "z": "bf404480.3cc8f8",
-      "d": true,
-      "group": "fbe55673.66dd98",
-      "name": "",
-      "order": 1,
-      "width": 0,
-      "height": 0,
-      "format": "<style>\n[aria-label~=\"Froling Parameter\"] {\n    background-color: var(--main-color,green);\n}\n</style>",
-      "storeOutMessages": true,
-      "fwdInMessages": true,
-      "resendOnRefresh": true,
-      "templateScope": "global",
-      "x": 240,
-      "y": 300,
-      "wires": [
-          []
-      ]
-  },
-  {
-      "id": "50dc17f1.fbae5",
-      "type": "inject",
-      "z": "bf404480.3cc8f8",
-      "name": "",
-      "props": [
-          {
-              "p": "payload"
-          },
-          {
-              "p": "topic",
-              "vt": "str"
-          }
-      ],
-      "repeat": "",
-      "crontab": "",
-      "once": false,
-      "onceDelay": 0.1,
-      "topic": "",
-      "payload": "",
-      "payloadType": "date",
-      "x": 150,
-      "y": 460,
-      "wires": [
-          [
-              "93224ee6.01a31"
-          ]
-      ]
-  },
-  {
-      "id": "bf1586a9.f0ecd8",
-      "type": "ui_chart",
-      "z": "bf404480.3cc8f8",
-      "name": "",
-      "group": "b0f85a15.3dcea",
-      "order": 1,
-      "width": "10",
-      "height": "7",
-      "label": "Pumpen",
-      "chartType": "line",
-      "legend": "true",
-      "xformat": "dd HH:mm",
-      "interpolate": "linear",
-      "nodata": "",
-      "dot": false,
-      "ymin": "",
-      "ymax": "",
-      "removeOlder": 1,
-      "removeOlderPoints": "200",
-      "removeOlderUnit": "86400",
-      "cutout": 0,
-      "useOneColor": false,
-      "useUTC": false,
-      "colors": [
-          "#277da1",
-          "#f94144",
-          "#4d908e",
-          "#43aa8b",
-          "#90be6d",
-          "#d62728",
-          "#ff9896",
-          "#9467bd",
-          "#c5b0d5"
-      ],
-      "outputs": 1,
-      "useDifferentColor": false,
-      "x": 720,
-      "y": 280,
-      "wires": [
-          []
-      ]
-  },
-  {
-      "id": "3074bec9.95edb2",
-      "type": "ui_gauge",
-      "z": "bf404480.3cc8f8",
-      "name": "",
-      "group": "a98bf70.d130808",
-      "order": 0,
-      "width": "10",
-      "height": "6",
-      "gtype": "gage",
-      "title": "Puffer Ladezustand",
-      "label": "%",
-      "format": "{{value}}",
-      "min": 0,
-      "max": "100",
-      "colors": [
-          "#f94144",
-          "#f9c74f",
-          "#43aa8b"
-      ],
-      "seg1": "33",
-      "seg2": "66",
-      "x": 750,
-      "y": 360,
-      "wires": []
-  },
-  {
-      "id": "a5b3584d.25ac68",
-      "type": "ui_text",
-      "z": "bf404480.3cc8f8",
-      "group": "a98bf70.d130808",
-      "order": 1,
-      "width": "5",
-      "height": "1",
-      "name": "",
-      "label": "Systemstatus",
-      "format": "{{msg.payload}}",
-      "layout": "row-spread",
-      "x": 740,
-      "y": 420,
-      "wires": []
-  },
-  {
-      "id": "f348c208.c17cb8",
-      "type": "ui_text",
-      "z": "bf404480.3cc8f8",
-      "group": "a98bf70.d130808",
-      "order": 1,
-      "width": "5",
-      "height": "1",
-      "name": "",
-      "label": "Pelletzähler [kg]",
-      "format": "{{msg.payload}}",
-      "layout": "row-spread",
-      "x": 740,
-      "y": 480,
-      "wires": []
-  },
-  {
-      "id": "fbe55673.66dd98",
-      "type": "ui_group",
-      "name": "Temperaturen",
-      "tab": "4382be31.14017",
-      "order": 1,
-      "disp": false,
-      "width": "10",
-      "collapse": false
-  },
-  {
-      "id": "9793c2cd.ca2b5",
-      "type": "ui_group",
-      "name": "Verbrauch",
-      "tab": "4382be31.14017",
-      "order": 7,
-      "disp": false,
-      "width": "10",
-      "collapse": false
-  },
-  {
-      "id": "b0f85a15.3dcea",
-      "type": "ui_group",
-      "name": "Pumpen",
-      "tab": "4382be31.14017",
-      "order": 3,
-      "disp": false,
-      "width": "11",
-      "collapse": false
-  },
-  {
-      "id": "a98bf70.d130808",
-      "type": "ui_group",
-      "name": "Status",
-      "tab": "4382be31.14017",
-      "order": 4,
-      "disp": false,
-      "width": "10",
-      "collapse": false
-  },
-  {
-      "id": "4382be31.14017",
-      "type": "ui_tab",
-      "name": "Froling Parameter",
-      "icon": "dashboard",
-      "disabled": false,
-      "hidden": false
-  }
+    {
+        "id": "73215be6.8d15e4",
+        "type": "function",
+        "z": "bf404480.3cc8f8",
+        "name": "build graph",
+        "func": "var payload = msg.payload;\nvar debug = [];\n\n// consumptions\nvar c1 = [];\n\n// temperatures\nvar t1 = [];\nvar t2 = [];\nvar t3 = [];\nvar t4 = [];\nvar t5 = [];\nvar t6 = [];\nvar t7 = [];\n\n// pumps\nvar p1 = [];\nvar p2 = [];\n\n// powers\nvar P1 = [];\nvar P2 = [];\n\n// Momentanleistung der Solaranlage in kW\nvar leistungSolar = 0;\n// Momentanverlustleistung bzw. Heizlast des gesamten Hauses\nvar leistungVerlust = 0;\n\n// Energie, die nötig ist, 1 Liter Wasser um 1K zu erwärmen [Wh / l K]\nvar pEnergiedichte = 1.16;\n\nvar maxvalues = 504; // one week if one datapoint every 20min\nvar min = Math.max(0, payload.length - maxvalues);\n//debug.push({\"min\": min});\n\nfor (let i = min; i < payload.length; i++) {\n  var timestamp = Date.parse(payload[i][\"Datum/Uhrzeit\"]);\n  \n  // extract the consumption per day\n  // derivative of moving average\n  var t = 24;\n  var d = 7; // time window: seven day\n  var twindow = 60 * 60 * 1000 * t * d; // 1000ms = 1s\n  var prev = timestamp - twindow;\n  index = 0;\n  for (let j = i; j >= 0; j--) {\n    var prevtimestamp = Date.parse(payload[j][\"Datum/Uhrzeit\"]);\n    if (prevtimestamp < prev) {\n        index = j;\n        break;\n    }\n  }\n  \n  //debug.push({\"timestamp\":timestamp,\"prevtimestamp\":prevtimestamp, \"index\":i, \"previous index\":index});\n  \n  var prevconsumption = parseInt(payload[index][\"Pelletverbrauch [kg]\"]) + parseInt(payload[index][\"Pelletverbrauch [t]\"]) * 1000;\n  var nowconsumption = parseInt(payload[i][\"Pelletverbrauch [kg]\"]) + parseInt(payload[i][\"Pelletverbrauch [t]\"]) * 1000;\n  var consumptionPerTime = (nowconsumption - prevconsumption) / d;\n  \n  var kgpelletverbrauch = {\"x\":timestamp, \"y\":(consumptionPerTime)};\n  var boilerIst = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Boiler Ist [°C]\"])};\n  var hkvorlaufIst = {\"x\":timestamp, \"y\":parseInt(payload[i][\"HK Vorlauf ist [°C]\"])};\n  var aussentemp = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Aussentemperatur [°C]\"])};\n  var warmwasserIst = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Warmwasser Ist [°C]\"])};\n  var pufferFuehlerOben = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Puffer Fuehler oben [°C]\"])};\n  var pufferFuehlerUnten = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Puffer Fuehler unten [°C]\"])};\n  var kollektorIst = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Kollektor [°C]\"])};\n  var kollektorPumpe = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Kollektor Pumpe [%]\"])};\n  var pufferPumpe = {\"x\":timestamp, \"y\":parseInt(payload[i][\"Puffer Pumpe [%]\"])};\n  \n  // Abschätzung der Leistung der Solaranlage\n  // Hinweis: die maximale Fördermenge wurde aus dem Datenblatt der Pumpe Grundfos UPM3 25-75 geschätzt.\n  // Bruttokollektorfläche ~9.78m^2, 2 * 30 Röhren (HP 30 Sunex)\n  // Außerdem wurde dieser Faktor aus dem Wärmeverlust des Hauses  abgeschätzt.\n  // Ohne übermäßigem Wasserverbrauch (kein Warmwasser, nur Heizung) braucht das Haus bei 0°C Aussentemperatur ungefähr 1.9kW an Leistung, um die Innentemperatur konstant zu halten.\n  // Die Leistung der Solaranlage muss nun 1.9kW betragen, wenn sich die Temperatur des Puffers nicht ändert.\n  // Also kann der Faktor so gewählt werden, dass die Momentanleistung der Solaranlage 1.9kW beträgt, wenn die Aussentemperatur 0°C beträgt und die Puffertemperatur konstant ist.\n  var literProStunde = 180 * parseInt(payload[i][\"Kollektor Pumpe [%]\"]) / 100; // Fördermenge der Pumpe, [l / h]\n  var deltaT1 = parseInt(payload[i][\"Kollektor [°C]\"]) - parseInt(payload[i][\"Puffer Fuehler unten [°C]\"]);\n  leistungSolar = parseInt(pEnergiedichte * literProStunde * deltaT1 * 10) / 10;\n  var powerSolar = {\"x\":timestamp, \"y\":leistungSolar};\n  \n  c1.push(kgpelletverbrauch);\n  \n  t1.push(boilerIst);\n  t2.push(hkvorlaufIst);\n  t3.push(aussentemp);\n  t4.push(warmwasserIst);\n  t5.push(pufferFuehlerOben);\n  t6.push(pufferFuehlerUnten);\n  t7.push(kollektorIst);\n  \n  p1.push(kollektorPumpe);\n  p2.push(pufferPumpe);\n  \n  P1.push(powerSolar);\n}\n\nvar msg1 = {payload:\"\"};\nvar msg2 = {payload:\"\"};\nvar msg3 = {payload:\"\"};\n\nmsg1.payload = [{\"series\":\"Pelletverbrauch [kg]\", \n                \"data\":[c1], \n                \"labels\": \"Pelletverbrauch [kg]\"}];\n                \nmsg2.payload = [{\"series\":[\"Boiler Ist [°C]\", \"HK Vorlauf ist [°C]\", \"Aussentemperatur [°C]\", \"Warmwasser Ist [°C]\", \"Puffer Fuehler oben [°C]\", \"Puffer Fuehler unten [°C]\", \"Kollektor [°C]\"], \n                \"data\":[t1, t2, t3, t4, t5, t6, t7], \n                \"labels\": [\"Boiler Ist [°C]\", \"HK Vorlauf ist [°C]\", \"Aussentemperatur [°C]\", \"Warmwasser Ist [°C]\", \"Puffer Fuehler oben [°C]\", \"Puffer Fuehler unten [°C]\", \"Kollektor [°C]\"]}];\n\nmsg3.payload = [{\"series\":[\"Kollektor Pumpe [%]\", \"Puffer Pumpe [%]\"], \n                \"data\":[p1, p2], \n                \"labels\": [\"Kollektor Pumpe [%]\", \"Puffer Pumpe [%]\"]}];\n\n// Momentanwerte\npufferLadezustand = parseInt(payload[payload.length - 1][\"Puffer Ladezustand [%]\"]);\nsystemStatus = payload[payload.length - 1][\"Status\"]\npelletzaehler = nowconsumption;\n\n// Langzeitmittelwert Verbrauch\nvar start = Date.parse(\"2021-11-01\");\nvar now = Date.parse(payload[payload.length - 1][\"Datum/Uhrzeit\"]);\nvar days = parseInt((now - start) / 1000 / 24 / 60 / 60);\nvar longrun = parseInt(pelletzaehler / days * 10) / 10;\n\n// Abschätzung der Verlustleistung bzw. Heizlast des Hauses\n// Puffervolumen, das ist der Teil des Wassers im Heizkreis, aus dem die Wärme entnommen wird\nvar gesamtVolumen = 1000;\n// Temperaturabfall pro Stunde (3 * 20min = 1h)\nvar deltaT2proh = 0;\nif (payload.length >= 4) {\n  deltaT2proh = parseInt(payload[payload.length - 1][\"Puffer Fuehler oben [°C]\"]) - parseInt(payload[payload.length - 4][\"Puffer Fuehler oben [°C]\"]);\n}\n// Da wir nur die Puffertemperatur zur Verfügung stehen haben und die Puffertemperatur aus der Summe aller Leistungen entsteht, \n// die ins System eingebracht werden, muss die Verlustleistung um die eingebrachten Leistungen korrigiert werden.\n// TODO: Heizleistung muss auch noch abgezogen werden.\nleistungVerlust = parseInt(pEnergiedichte * gesamtVolumen * deltaT2proh * 10) / 10 - leistungSolar;\n\n// DEBUG\ndebug.push(days);\n\nvar msg4 = {payload:pufferLadezustand};\nvar msg5 = {payload:systemStatus};\nvar msg6 = {payload:pelletzaehler};\nvar msg7 = {payload:longrun};\nvar msg8 = {payload:leistungSolar};\nvar msg9 = {payload:leistungVerlust};\n\nreturn [msg1, msg2, msg3, msg4, msg5, msg6, msg7, msg8, msg9];",
+        "outputs": 9,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 490,
+        "y": 200,
+        "wires": [
+            [
+                "de8f8a17.0366e",
+                "48df41aa.a59b9"
+            ],
+            [
+                "de8f8a17.0366e",
+                "54a1aab.9bdf654"
+            ],
+            [
+                "bf1586a9.f0ecd8",
+                "de8f8a17.0366e"
+            ],
+            [
+                "3074bec9.95edb2",
+                "de8f8a17.0366e"
+            ],
+            [
+                "a5b3584d.25ac68",
+                "de8f8a17.0366e"
+            ],
+            [
+                "de8f8a17.0366e",
+                "f348c208.c17cb8"
+            ],
+            [
+                "de8f8a17.0366e",
+                "2422e87d.849cd"
+            ],
+            [
+                "b13c39d9.8bc74"
+            ],
+            [
+                "5f57f102.bd979"
+            ]
+        ]
+    }
 ]
