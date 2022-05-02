@@ -16,6 +16,7 @@ var t7 = [];
 // pumps
 var p1 = [];
 var p2 = [];
+var p3 = [];
 
 // powers
 var P1 = [];
@@ -67,6 +68,7 @@ for (let i = min; i < payload.length; i++) {
   var kollektorIst = {"x":timestamp, "y":parseInt(payload[i]["Kollektor [°C]"])};
   var kollektorPumpe = {"x":timestamp, "y":parseInt(payload[i]["Kollektor Pumpe [%]"])};
   var pufferPumpe = {"x":timestamp, "y":parseInt(payload[i]["Puffer Pumpe [%]"])};
+  var heizkreisPumpe = {"x":timestamp, "y":parseInt(payload[i]["HK Pumpe [%]"])};
   
   // Abschätzung der Leistung der Solaranlage
   // Hinweis: die maximale Fördermenge wurde aus dem Datenblatt der Pumpe Grundfos UPM3 25-75 geschätzt.
@@ -75,7 +77,7 @@ for (let i = min; i < payload.length; i++) {
   // Ohne übermäßigem Wasserverbrauch (kein Warmwasser, nur Heizung) braucht das Haus bei 0°C Aussentemperatur ungefähr 1.9kW an Leistung, um die Innentemperatur konstant zu halten.
   // Die Leistung der Solaranlage muss nun 1.9kW betragen, wenn sich die Temperatur des Puffers nicht ändert.
   // Also kann der Faktor so gewählt werden, dass die Momentanleistung der Solaranlage 1.9kW beträgt, wenn die Aussentemperatur 0°C beträgt und die Puffertemperatur konstant ist.
-  var literProStunde = 180 * parseInt(payload[i]["Kollektor Pumpe [%]"]) / 100; // Fördermenge der Pumpe, [l / h]
+  var literProStunde = 400 * parseInt(payload[i]["Kollektor Pumpe [%]"]) / 100; // Fördermenge der Pumpe, [l / h]
   var deltaT1 = parseInt(payload[i]["Kollektor [°C]"]) - parseInt(payload[i]["Puffer Fuehler unten [°C]"]);
   leistungSolar = parseInt(pEnergiedichte * literProStunde * deltaT1 * 10) / 10;
   var powerSolar = {"x":timestamp, "y":leistungSolar};
@@ -92,6 +94,7 @@ for (let i = min; i < payload.length; i++) {
   
   p1.push(kollektorPumpe);
   p2.push(pufferPumpe);
+  p3.push(heizkreisPumpe);
   
   P1.push(powerSolar);
 }
@@ -108,9 +111,9 @@ msg2.payload = [{"series":["Boiler Ist [°C]", "HK Vorlauf ist [°C]", "Aussente
                 "data":[t1, t2, t3, t4, t5, t6, t7], 
                 "labels": ["Boiler Ist [°C]", "HK Vorlauf ist [°C]", "Aussentemperatur [°C]", "Warmwasser Ist [°C]", "Puffer Fuehler oben [°C]", "Puffer Fuehler unten [°C]", "Kollektor [°C]"]}];
 
-msg3.payload = [{"series":["Kollektor Pumpe [%]", "Puffer Pumpe [%]"], 
-                "data":[p1, p2], 
-                "labels": ["Kollektor Pumpe [%]", "Puffer Pumpe [%]"]}];
+msg3.payload = [{"series":["Kollektor Pumpe [%]", "Puffer Pumpe [%]", "HK Pumpe [%]"], 
+                "data":[p1, p2, p3], 
+                "labels": ["Kollektor Pumpe [%]", "Puffer Pumpe [%]", "HK Pumpe [%]"]}];
 
 // Momentanwerte
 pufferLadezustand = parseInt(payload[payload.length - 1]["Puffer Ladezustand [%]"]);
@@ -134,7 +137,7 @@ if (payload.length >= 4) {
 // Da wir nur die Puffertemperatur zur Verfügung stehen haben und die Puffertemperatur aus der Summe aller Leistungen entsteht, 
 // die ins System eingebracht werden, muss die Verlustleistung um die eingebrachten Leistungen korrigiert werden.
 // TODO: Heizleistung muss auch noch abgezogen werden.
-leistungVerlust = parseInt(pEnergiedichte * gesamtVolumen * deltaT2proh * 10) / 10 - leistungSolar;
+leistungVerlust = parseInt((pEnergiedichte * gesamtVolumen * deltaT2proh - leistungSolar) * 10) / 10;
 
 // DEBUG
 debug.push(days);
