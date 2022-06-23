@@ -9,7 +9,18 @@ import datetime
 from enum import Enum
 
 __prog_name__ = 'Froling data collector'
-__version__ = 0.1
+__version__ = 0.2
+
+def log(message):
+    now = datetime.datetime.now()
+    date_time = now.strftime("%d.%m.%Y %H:%M:%S: ")
+    message = date_time + message
+    print(message)
+    # write message to file
+    f = open("collection.log", 'a')
+    f.write(message)
+    f.write("\n")
+    f.close()
 
 class Status(Enum):
     ERROR = 2,
@@ -17,7 +28,7 @@ class Status(Enum):
     SUCCESS = 0
 
 def login(cfg):
-    print("[+] Logging in...")
+    log("[+] Logging in...")
     url = "https://connect-api.froeling.com:443/app/v1.0/resources/loginNew"
     headers = {"Content-Type": "application/json", "Connection": "close", "Accept": "*/*", "User-Agent": "Froeling PROD/2107.1 (com.froeling.connect-ios; build:2107.1.01; iOS 15.2.1) Alamofire/4.8.1", "Accept-Language": "en", "Accept-Encoding": "gzip, deflate"}
     data={"deviceId": cfg.deviceID, "osType": "IOS", "password": cfg.password, "pushToken": "", "userName": cfg.username}
@@ -28,10 +39,10 @@ def login(cfg):
     f.write(bearer)
     f.close()
     if len(bearer) == 0:
-        print("[-] Login failed.")
+        log("[-] Login failed.")
         return Status.LOGIN_FAILED
     else:
-        print("[+] Login succeeded.")
+        log("[+] Login succeeded.")
         return Status.SUCCESS
 
 
@@ -54,7 +65,7 @@ def getFacilityDetails(cfg):
     if "security check failed" in str(response.content) or len(str(response.content)) == 0:
         return Status.LOGIN_FAILED, [], []
 
-    #print("response = {}".format(response.content))
+    #log("response = {}".format(response.content))
     try:
       data = response.json()
     except:
@@ -133,7 +144,7 @@ def getFacilityDetails(cfg):
     pufferfuehlerUnten = data['userMenus'][3]['topView'][6]['parameter']
     kollektorTemp = data['userMenus'][4]['topView'][1]['parameter']
     kollektorPumpe = data['userMenus'][4]['topView'][0]['parameter']
-    #print(kollektorPumpe)
+    #log(kollektorPumpe)
 
     # Header
     header = ["Datum/Uhrzeit",
@@ -214,17 +225,17 @@ def main():
     cfg = parser.parse_args()
     cfg.prog_name = __prog_name__
 
-    print("[+] Collecting data...")
+    log("[+] Collecting data...")
     status, header, data = getFacilityDetails(cfg)
-    print(",".join(header))
+    log(",".join(header))
 
     while True:
         status, header, data = getFacilityDetails(cfg)
         if status == Status.LOGIN_FAILED:
             login(cfg)
         #collectedData += [data]
-        #print(tabulate([data],headers=header))
-        print(",".join(data))
+        #log(tabulate([data],headers=header))
+        log(",".join(data))
 
         # write data to file
         if os.path.isfile('data.csv'):
@@ -249,7 +260,7 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print('Exiting...')
+        log('Exiting...')
         try:
             sys.exit(0)
         except SystemExit:
