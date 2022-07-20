@@ -219,7 +219,7 @@ def main():
         metavar='<intervall>',
         dest='intervall',
         type=int,
-        help='The time intervall to poll the data.',
+        help='The time intervall in seconds to poll the data.',
         default=60)
 
     cfg = parser.parse_args()
@@ -233,26 +233,31 @@ def main():
         status, header, data = getFacilityDetails(cfg)
         if status == Status.LOGIN_FAILED:
             login(cfg)
-        #collectedData += [data]
-        #log(tabulate([data],headers=header))
-        log(",".join(data))
+            time.sleep(60)
 
-        # write data to file
-        if os.path.isfile('data.csv'):
-            f = open("data.csv", 'a')
-            f.write(",".join(data))
-            f.write("\n")
-            f.close()
+        elif status != Status.ERROR:
+            #collectedData += [data]
+            #log(tabulate([data],headers=header))
+            log(",".join(data))
+        
+            # write data to file
+            if os.path.isfile('data.csv'):
+                f = open("data.csv", 'a')
+                f.write(",".join(data))
+                f.write("\n")
+                f.close()
+            else:
+                f = open("data.csv", 'w')
+                f.write(",".join(header))
+                f.write("\n")
+                f.write(",".join(data))
+                f.write("\n")
+                f.close()
+
+            time.sleep(cfg.intervall)
+
         else:
-            f = open("data.csv", 'w')
-            f.write(",".join(header))
-            f.write("\n")
-            f.write(",".join(data))
-            f.write("\n")
-            f.close()
-
-        time.sleep(cfg.intervall)
-
+            time.sleep(60)
 
 
 
