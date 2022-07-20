@@ -9,7 +9,7 @@ import datetime
 from enum import Enum
 
 __prog_name__ = 'Froling data collector'
-__version__ = 0.2
+__version__ = 0.3
 
 def log(message):
     now = datetime.datetime.now()
@@ -227,18 +227,19 @@ def main():
 
     log("[+] Collecting data...")
     status, header, data = getFacilityDetails(cfg)
-    log(",".join(header))
+    #log(",".join(header))
 
     while True:
         status, header, data = getFacilityDetails(cfg)
         if status == Status.LOGIN_FAILED:
-            login(cfg)
+            log("[-] Login failed. Trying again in 60s.")
             time.sleep(60)
+            login(cfg)
 
         elif status != Status.ERROR:
             #collectedData += [data]
             #log(tabulate([data],headers=header))
-            log(",".join(data))
+            #log(",".join(data))
         
             # write data to file
             if os.path.isfile('data.csv'):
@@ -257,6 +258,7 @@ def main():
             time.sleep(cfg.intervall)
 
         else:
+            log("[-] General error occured. Trying again in 60s.")
             time.sleep(60)
 
 
@@ -265,7 +267,7 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        log('Exiting...')
+        log('[+] Exiting...')
         try:
             sys.exit(0)
         except SystemExit:
