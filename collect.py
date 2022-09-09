@@ -192,6 +192,10 @@ def getFacilityDetails(cfg):
 
 
 def main():
+    pid = os.getpid()
+    with open("process.id", "w") as pidfile:  
+        pidfile.write("{}".format(pid))
+
     parser = argparse.ArgumentParser(description='%s version %.2f' % (__prog_name__, __version__))
     parser.add_argument('-u', '--username',
         action='store',
@@ -229,6 +233,7 @@ def main():
     status, header, data = getFacilityDetails(cfg)
     #log(",".join(header))
 
+    prevStatus = Status.SUCCESS
     while True:
         status, header, data = getFacilityDetails(cfg)
         if status == Status.LOGIN_FAILED:
@@ -237,9 +242,8 @@ def main():
             login(cfg)
 
         elif status != Status.ERROR:
-            #collectedData += [data]
-            #log(tabulate([data],headers=header))
-            #log(",".join(data))
+            if prevStatus != Status.SUCCESS:
+                log("[+] Continuing collecting data.")
         
             # write data to file
             if os.path.isfile('data.csv'):
@@ -260,6 +264,8 @@ def main():
         else:
             log("[-] General error occured. Trying again in 60s.")
             time.sleep(60)
+
+        prevError = status
 
 
 
