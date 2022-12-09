@@ -1,14 +1,16 @@
 #!/bin/sh
 
-pid=$(cat process.id)
+outputdir=/mnt/volumes/usb/frolingdata/
+
+pid=$(cat ${outputdir}/process.id)
 echo "Killing process with PID $pid..."
 kill -9 $pid
 
 echo "Restarting data collector..."
-nohup ./run.sh > output.log 2> error.log &
+nohup ./run.sh > ${outputdir}/output.log 2> ${outputdir}/error.log &
 sleep 10
 
-pid=$(cat process.id)
+pid=$(cat ${outputdir}/process.id)
 echo "New PID is $pid."
 echo "Done."
 

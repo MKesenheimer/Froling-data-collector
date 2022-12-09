@@ -11,13 +11,15 @@ from enum import Enum
 __prog_name__ = 'Froling data collector'
 __version__ = 0.3
 
+outputdir="/mnt/volumes/usb/frolingdata"
+
 def log(message):
     now = datetime.datetime.now()
     date_time = now.strftime("%d.%m.%Y %H:%M:%S: ")
     message = date_time + message
     print(message)
     # write message to file
-    f = open("collection.log", 'a')
+    f = open(outputdir+"collection.log", 'a')
     f.write(message)
     f.write("\n")
     f.close()
@@ -35,7 +37,7 @@ def login(cfg):
     response = requests.post(url, headers=headers, json=data)
     bearer = response.headers['Authorization']
 
-    f = open("bearer.txt", "w")
+    f = open(outputdir+"bearer.txt", "w")
     f.write(bearer)
     f.close()
     if len(bearer) == 0:
@@ -48,7 +50,7 @@ def login(cfg):
 
 def getFacilityDetails(cfg):
     try:
-        f = open("bearer.txt", "r")
+        f = open(outputdir+"bearer.txt", "r")
         bearer = f.read()
         f.close()
     except:
@@ -193,7 +195,7 @@ def getFacilityDetails(cfg):
 
 def main():
     pid = os.getpid()
-    with open("process.id", "w") as pidfile:  
+    with open(outputdir+"process.id", "w") as pidfile:  
         pidfile.write("{}".format(pid))
 
     parser = argparse.ArgumentParser(description='%s version %.2f' % (__prog_name__, __version__))
@@ -246,13 +248,13 @@ def main():
                 log("[+] Continuing collecting data.")
         
             # write data to file
-            if os.path.isfile('data.csv'):
-                f = open("data.csv", 'a')
+            if os.path.isfile(outputdir+"data.csv"):
+                f = open(outputdir+"data.csv", 'a')
                 f.write(",".join(data))
                 f.write("\n")
                 f.close()
             else:
-                f = open("data.csv", 'w')
+                f = open(outputdir+"data.csv", 'w')
                 f.write(",".join(header))
                 f.write("\n")
                 f.write(",".join(data))
