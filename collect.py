@@ -11,7 +11,7 @@ from enum import Enum
 __prog_name__ = 'Froling data collector'
 __version__ = 0.3
 
-outputdir="/mnt/volumes/usb/frolingdata"
+outputdir="/mnt/volumes/usb/frolingdata/"
 
 def log(message):
     now = datetime.datetime.now()
