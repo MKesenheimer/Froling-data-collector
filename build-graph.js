@@ -5,13 +5,13 @@ var debug = [];
 var c1 = [];
 
 // temperatures
-var t1 = [];
-var t2 = [];
-var t3 = [];
-var t4 = [];
-var t5 = [];
-var t6 = [];
-var t7 = [];
+var t1 = []; // boilerIst
+var t2 = []; // hkvorlaufIst
+var t3 = []; // aussentemp
+var t4 = []; // warmwasserIst
+var t5 = []; // pufferFuehlerOben
+var t6 = []; // pufferFuehlerUnten
+var t7 = []; // kollektorIst
 
 // pumps
 var p1 = [];
@@ -19,8 +19,8 @@ var p2 = [];
 var p3 = [];
 
 // powers
-var P1 = [];
-var P2 = [];
+var P1 = []; // Leistung Solar
+var P2 = []; // Verlauf der Verlustleistung
 
 // Momentanleistung der Solaranlage in kW
 var leistungSolar = 0;
@@ -29,7 +29,9 @@ var leistungVerlust = 0;
 
 // Energie, die nötig ist, 1 Liter Wasser um 1K zu erwärmen [Wh / l K]
 var pEnergiedichte = 1.16;
-
+// Puffervolumen, das ist der Teil des Wassers im Heizkreis, aus dem die Wärme entnommen wird
+var gesamtVolumen = 1000;
+  
 var maxvalues = 504; // one week if one datapoint every 20min
 var min = Math.max(0, payload.length - maxvalues);
 //debug.push({"min": min});
@@ -82,6 +84,18 @@ for (let i = min; i < payload.length; i++) {
   leistungSolar = parseInt(pEnergiedichte * literProStunde * deltaT1 * 10) / 10;
   var powerSolar = {"x":timestamp, "y":leistungSolar};
   
+  // Abschätzung der Verlustleistung bzw. Heizlast des Hauses
+  // Temperaturabfall pro Stunde (3 * 20min = 1h)
+  var deltaT2proh = 0;
+  if (i >= 4) {
+    deltaT2proh = parseInt(payload[i - 1]["Puffer Fuehler oben [°C]"]) - parseInt(payload[i - 4]["Puffer Fuehler oben [°C]"]);
+  }
+  // Da wir nur die Puffertemperatur zur Verfügung stehen haben und die Puffertemperatur aus der Summe aller Leistungen entsteht, 
+  // die ins System eingebracht werden, muss die Verlustleistung um die eingebrachten Leistungen korrigiert werden.
+  // TODO: Heizleistung muss auch noch abgezogen werden.
+  leistungVerlust = parseInt((pEnergiedichte * gesamtVolumen * deltaT2proh - leistungSolar) * 10) / 10; // in kW
+  var powerLoss = {"x":timestamp, "y":leistungVerlust / 1000};
+  
   c1.push(kgpelletverbrauch);
   
   t1.push(boilerIst);
@@ -97,6 +111,7 @@ for (let i = min; i < payload.length; i++) {
   p3.push(heizkreisPumpe);
   
   P1.push(powerSolar);
+  P2.push(powerLoss);
 }
 
 var msg1 = {payload:""};
@@ -107,9 +122,9 @@ msg1.payload = [{"series":"Pelletverbrauch [kg]",
                 "data":[c1], 
                 "labels": "Pelletverbrauch [kg]"}];
                 
-msg2.payload = [{"series":["Boiler Ist [°C]", "HK Vorlauf ist [°C]", "Aussentemperatur [°C]", "Warmwasser Ist [°C]", "Puffer Fuehler oben [°C]", "Puffer Fuehler unten [°C]", "Kollektor [°C]"], 
-                "data":[t1, t2, t3, t4, t5, t6, t7], 
-                "labels": ["Boiler Ist [°C]", "HK Vorlauf ist [°C]", "Aussentemperatur [°C]", "Warmwasser Ist [°C]", "Puffer Fuehler oben [°C]", "Puffer Fuehler unten [°C]", "Kollektor [°C]"]}];
+msg2.payload = [{"series":["Boiler Ist [°C]", "HK Vorlauf ist [°C]", "Aussentemperatur [°C]", "Warmwasser Ist [°C]", "Puffer Fuehler oben [°C]", "Puffer Fuehler unten [°C]", "Kollektor [°C]", "Leistungsbilanz [kW]"], 
+                "data":[t1, t2, t3, t4, t5, t6, t7, P2], 
+                "labels": ["Boiler Ist [°C]", "HK Vorlauf ist [°C]", "Aussentemperatur [°C]", "Warmwasser Ist [°C]", "Puffer Fuehler oben [°C]", "Puffer Fuehler unten [°C]", "Kollektor [°C]", "Leistungsbilanz [kW]"]}];
 
 msg3.payload = [{"series":["Kollektor Pumpe [%]", "Puffer Pumpe [%]", "HK Pumpe [%]"], 
                 "data":[p1, p2, p3], 
@@ -125,19 +140,6 @@ var start = Date.parse("2021-11-01");
 var now = Date.parse(payload[payload.length - 1]["Datum/Uhrzeit"]);
 var days = parseInt((now - start) / 1000 / 24 / 60 / 60);
 var longrun = parseInt(pelletzaehler / days * 10) / 10;
-
-// Abschätzung der Verlustleistung bzw. Heizlast des Hauses
-// Puffervolumen, das ist der Teil des Wassers im Heizkreis, aus dem die Wärme entnommen wird
-var gesamtVolumen = 1000;
-// Temperaturabfall pro Stunde (3 * 20min = 1h)
-var deltaT2proh = 0;
-if (payload.length >= 4) {
-  deltaT2proh = parseInt(payload[payload.length - 1]["Puffer Fuehler oben [°C]"]) - parseInt(payload[payload.length - 4]["Puffer Fuehler oben [°C]"]);
-}
-// Da wir nur die Puffertemperatur zur Verfügung stehen haben und die Puffertemperatur aus der Summe aller Leistungen entsteht, 
-// die ins System eingebracht werden, muss die Verlustleistung um die eingebrachten Leistungen korrigiert werden.
-// TODO: Heizleistung muss auch noch abgezogen werden.
-leistungVerlust = parseInt((pEnergiedichte * gesamtVolumen * deltaT2proh - leistungSolar) * 10) / 10;
 
 // DEBUG
 debug.push(days);
