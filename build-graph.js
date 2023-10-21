@@ -36,6 +36,10 @@ var maxvalues = 504; // one week if one datapoint every 20min
 var min = Math.max(0, payload.length - maxvalues);
 //debug.push({"min": min});
 
+// average power loss
+var avgPowerLoss = 0.0;
+var alpha = 0.2;
+
 for (let i = min; i < payload.length; i++) {
   var timestamp = Date.parse(payload[i]["Datum/Uhrzeit"]);
   
@@ -88,13 +92,15 @@ for (let i = min; i < payload.length; i++) {
   // Temperaturabfall pro Stunde (3 * 20min = 1h)
   var deltaT2proh = 0;
   if (i >= 4) {
-    deltaT2proh = parseInt(payload[i - 1]["Puffer Fuehler oben [°C]"]) - parseInt(payload[i - 4]["Puffer Fuehler oben [°C]"]);
+    deltaT2proh = 0.5 * (parseInt(payload[i - 1]["Puffer Fuehler oben [°C]"]) - parseInt(payload[i - 7]["Puffer Fuehler oben [°C]"]));
   }
   // Da wir nur die Puffertemperatur zur Verfügung stehen haben und die Puffertemperatur aus der Summe aller Leistungen entsteht, 
   // die ins System eingebracht werden, muss die Verlustleistung um die eingebrachten Leistungen korrigiert werden.
   // TODO: Heizleistung muss auch noch abgezogen werden.
-  leistungVerlust = parseInt((pEnergiedichte * gesamtVolumen * deltaT2proh - leistungSolar) * 10) / 10; // in kW
-  var powerLoss = {"x":timestamp, "y":leistungVerlust / 1000};
+  leistungVerlust = pEnergiedichte * gesamtVolumen * deltaT2proh - leistungSolar; // in W
+  avgPowerLoss = parseInt(((alpha * leistungVerlust) + (1.0 - alpha) * avgPowerLoss) * 10) / 10; // averaging
+  var powerLoss = {"x":timestamp, "y":avgPowerLoss / 100}; // in Einheiten von 100W
+  
   
   c1.push(kgpelletverbrauch);
   
@@ -122,9 +128,9 @@ msg1.payload = [{"series":"Pelletverbrauch [kg]",
                 "data":[c1], 
                 "labels": "Pelletverbrauch [kg]"}];
                 
-msg2.payload = [{"series":["Boiler Ist [°C]", "HK Vorlauf ist [°C]", "Aussentemperatur [°C]", "Warmwasser Ist [°C]", "Puffer Fuehler oben [°C]", "Puffer Fuehler unten [°C]", "Kollektor [°C]", "Leistungsbilanz [kW]"], 
+msg2.payload = [{"series":["Boiler Ist [°C]", "HK Vorlauf ist [°C]", "Aussentemperatur [°C]", "Warmwasser Ist [°C]", "Puffer Fuehler oben [°C]", "Puffer Fuehler unten [°C]", "Kollektor [°C]", "Leistungsbilanz [100W]"], 
                 "data":[t1, t2, t3, t4, t5, t6, t7, P2], 
-                "labels": ["Boiler Ist [°C]", "HK Vorlauf ist [°C]", "Aussentemperatur [°C]", "Warmwasser Ist [°C]", "Puffer Fuehler oben [°C]", "Puffer Fuehler unten [°C]", "Kollektor [°C]", "Leistungsbilanz [kW]"]}];
+                "labels": ["Boiler Ist [°C]", "HK Vorlauf ist [°C]", "Aussentemperatur [°C]", "Warmwasser Ist [°C]", "Puffer Fuehler oben [°C]", "Puffer Fuehler unten [°C]", "Kollektor [°C]", "Leistungsbilanz [100W]"]}];
 
 msg3.payload = [{"series":["Kollektor Pumpe [%]", "Puffer Pumpe [%]", "HK Pumpe [%]"], 
                 "data":[p1, p2, p3], 
@@ -136,13 +142,13 @@ systemStatus = payload[payload.length - 1]["Status"]
 pelletzaehler = nowconsumption;
 
 // Langzeitmittelwert Verbrauch
-var start = Date.parse("2021-11-01");
+var start = Date.parse("2023-02-22"); // year-month-day
 var now = Date.parse(payload[payload.length - 1]["Datum/Uhrzeit"]);
 var days = parseInt((now - start) / 1000 / 24 / 60 / 60);
 var longrun = parseInt(pelletzaehler / days * 10) / 10;
 
 // DEBUG
-debug.push(days);
+//debug.push(avgPowerLoss);
 
 var msg4 = {payload:pufferLadezustand};
 var msg5 = {payload:systemStatus};
