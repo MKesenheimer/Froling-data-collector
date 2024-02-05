@@ -12,8 +12,17 @@ from paho.mqtt import client as mqtt
 __prog_name__ = 'Froling data collector'
 __version__ = 0.3
 
+# globals
 outputdir = "."
 client = None
+
+# Energie, die nötig ist, 1 Liter Wasser um 1K zu erwärmen [Wh / l K]
+pEnergiedichte = 1.16
+# Puffervolumen, das ist der Teil des Wassers im Heizkreis, aus dem die Wärme entnommen wird
+gesamtVolumen = 1000
+
+# MQTT
+QOS = 1
 
 def log(message):
     global outputdir
@@ -22,7 +31,7 @@ def log(message):
     message = date_time + message
     print(message)
     # write message to file
-    f = open(outputdir+"/collection.log", 'a')
+    f = open(outputdir + "/collection.log", 'a')
     f.write(message)
     f.write("\n")
     f.close()
@@ -41,7 +50,7 @@ def login(cfg):
     response = requests.post(url, headers=headers, json=data)
     bearer = response.headers['Authorization']
 
-    f = open(outputdir+"/bearer.txt", "w")
+    f = open(outputdir + "/bearer.txt", "w")
     f.write(bearer)
     f.close()
     if len(bearer) == 0:
@@ -55,22 +64,27 @@ def mqttConnect(cfg):
     global client
     client = mqtt.Client()
     client.username_pw_set(cfg.mqttusername, cfg.mqttpassword)
-    client.will_set("/froling/status", "connection failure", qos=1, retain=False)
+    client.will_set("/froling/status", "connection failure", qos=QOS, retain=False)
     mip, mport = cfg.mqttbroker.split(":")
-    ret = client.connect(mip, int(mport))
+    client.connect(mip, int(mport))
+    client.loop_start()
 
-def mqttDisconnect(cfg):
+def mqttDisconnect():
     global client
-    client.disconnect()
+    try:
+        client.disconnect()
+    except:
+        pass
 
 def publishMessage(topic, value):
     global client
-    client.publish(topic, value, qos=1)  
+    info = client.publish(topic, value, qos=QOS)
+    info.wait_for_publish()
 
 def getFacilityDetails(cfg):
     global outputdir
     try:
-        f = open(outputdir+"/bearer.txt", "r")
+        f = open(outputdir + "/bearer.txt", "r")
         bearer = f.read()
         f.close()
     except:
@@ -211,20 +225,20 @@ def getFacilityDetails(cfg):
             tCounter['valueText']]
 
     mqttConnect(cfg)
-    publishMessage("froling/boilerState", boilerState['valueText'])
-    publishMessage("froling/boilerIstTemp", boilerIstTemp['valueText'])
-    publishMessage("froling/vorlaufBeiMinus10", vorlaufBeiMinus10['valueText'])
-    publishMessage("froling/vorlaufBeiPlus10", vorlaufBeiPlus10['valueText'])
-    publishMessage("froling/aktuellerVorlauf", aktuellerVorlauf['valueText'])
-    publishMessage("froling/hkpumpeAktiv", str(int(hkpumpeAktiv['valueText']) * 100))
-    publishMessage("froling/outAirTemp", outAirTemp['valueText'])
-    publishMessage("froling/warmwasserIst", warmwasserIst['valueText'])
-    publishMessage("froling/pufferfuehlerOben", pufferfuehlerOben['valueText'])
-    publishMessage("froling/pufferLadezustand", pufferLadezustand['valueText'])
-    publishMessage("froling/pufferPumpeAnsteuerung", pufferPumpeAnsteuerung['valueText'])
-    publishMessage("froling/kgCounter", kgCounter['valueText'])
-    publishMessage("froling/tCounter", tCounter['valueText'])
-    mqttDisconnect(cfg)
+    publishMessage("/froling/boilerState", boilerState['valueText'])
+    publishMessage("/froling/boilerIstTemp", boilerIstTemp['valueText'])
+    publishMessage("/froling/vorlaufBeiMinus10", vorlaufBeiMinus10['valueText'])
+    publishMessage("/froling/vorlaufBeiPlus10", vorlaufBeiPlus10['valueText'])
+    publishMessage("/froling/aktuellerVorlauf", aktuellerVorlauf['valueText'])
+    publishMessage("/froling/hkpumpeAktiv", str(int(hkpumpeAktiv['valueText']) * 100))
+    publishMessage("/froling/outAirTemp", outAirTemp['valueText'])
+    publishMessage("/froling/warmwasserIst", warmwasserIst['valueText'])
+    publishMessage("/froling/pufferfuehlerOben", pufferfuehlerOben['valueText'])
+    publishMessage("/froling/pufferLadezustand", pufferLadezustand['valueText'])
+    publishMessage("/froling/pufferPumpeAnsteuerung", pufferPumpeAnsteuerung['valueText'])
+    publishMessage("/froling/kgCounter", kgCounter['valueText'])
+    publishMessage("/froling/tCounter", tCounter['valueText'])
+    mqttDisconnect()
 
     return Status.SUCCESS, header, values
 
@@ -295,8 +309,11 @@ def main():
     outputdir = cfg.outputdir
 
     pid = os.getpid()
-    with open(outputdir+"/process.id", "w") as pidfile:  
+    with open(outputdir + "/process.id", "w") as pidfile:  
         pidfile.write("{}".format(pid))
+
+    # mqtt
+    #mqttConnect(cfg)
 
     log("[+] Collecting data...")
     status, header, data = getFacilityDetails(cfg)
@@ -315,13 +332,13 @@ def main():
                 log("[+] Continuing collecting data.")
         
             # write data to file
-            if os.path.isfile(outputdir+"/data.csv"):
-                f = open(outputdir+"/data.csv", 'a')
+            if os.path.isfile(outputdir + "/data.csv"):
+                f = open(outputdir + "/data.csv", 'a')
                 f.write(",".join(data))
                 f.write("\n")
                 f.close()
             else:
-                f = open(outputdir+"/data.csv", 'w')
+                f = open(outputdir + "/data.csv", 'w')
                 f.write(",".join(header))
                 f.write("\n")
                 f.write(",".join(data))
@@ -343,6 +360,7 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         log('[+] Exiting...')
+        mqttDisconnect()
         try:
             sys.exit(0)
         except SystemExit:

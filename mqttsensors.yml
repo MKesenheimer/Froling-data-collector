@@ -1,89 +1,89 @@
 - name: "Froling/boilerState"
-  state_topic: froling/boilerState
+  state_topic: /froling/boilerState
   #state_class: measurement
   #device_class: energy
   unique_id: froling_boilerState
   #unit_of_measurement: "kWh"
 
 - name: "Froling/boilerIstTemp"
-  state_topic: froling/boilerIstTemp
+  state_topic: /froling/boilerIstTemp
   state_class: measurement
   device_class: temperature
   unique_id: froling_boilerIstTemp
   unit_of_measurement: "°C"
 
 - name: "Froling/vorlaufBeiMinus10"
-  state_topic: froling/vorlaufBeiMinus10
+  state_topic: /froling/vorlaufBeiMinus10
   state_class: measurement
   device_class: temperature
   unique_id: froling_vorlaufBeiMinus10
   unit_of_measurement: "°C"
 
 - name: "Froling/vorlaufBeiPlus10"
-  state_topic: froling/vorlaufBeiPlus10
+  state_topic: /froling/vorlaufBeiPlus10
   state_class: measurement
   device_class: temperature
   unique_id: froling_vorlaufBeiPlus10
   unit_of_measurement: "°C"
 
 - name: "Froling/aktuellerVorlauf"
-  state_topic: froling/aktuellerVorlauf
+  state_topic: /froling/aktuellerVorlauf
   state_class: measurement
   device_class: temperature
   unique_id: froling_aktuellerVorlauf
   unit_of_measurement: "°C"
 
 - name: "Froling/hkpumpeAktiv"
-  state_topic: froling/hkpumpeAktiv
+  state_topic: /froling/hkpumpeAktiv
   state_class: measurement
   device_class: water
   unique_id: froling_hkpumpeAktiv
   unit_of_measurement: "%"
 
 - name: "Froling/outAirTemp"
-  state_topic: froling/outAirTemp
+  state_topic: /froling/outAirTemp
   state_class: measurement
   device_class: temperature
   unique_id: froling_outAirTemp
   unit_of_measurement: "°C"
 
 - name: "Froling/warmwasserIst"
-  state_topic: froling/warmwasserIst
+  state_topic: /froling/warmwasserIst
   state_class: measurement
   device_class: temperature
   unique_id: froling_warmwasserIst
   unit_of_measurement: "°C"
 
 - name: "Froling/pufferfuehlerOben"
-  state_topic: froling/pufferfuehlerOben
+  state_topic: /froling/pufferfuehlerOben
   state_class: measurement
   device_class: temperature
   unique_id: froling_pufferfuehlerOben
   unit_of_measurement: "°C"
 
 - name: "Froling/pufferLadezustand"
-  state_topic: froling/pufferLadezustand
+  state_topic: /froling/pufferLadezustand
   state_class: measurement
   device_class: water
   unique_id: froling_pufferLadezustand
   unit_of_measurement: "%"
 
 - name: "Froling/pufferPumpeAnsteuerung"
-  state_topic: froling/pufferPumpeAnsteuerung
+  state_topic: /froling/pufferPumpeAnsteuerung
   state_class: measurement
   device_class: water
   unique_id: froling_pufferPumpeAnsteuerung
   unit_of_measurement: "%"
 
 - name: "Froling/kgCounter"
-  state_topic: froling/kgCounter
+  state_topic: /froling/kgCounter
   state_class: measurement
   device_class: weight
   unique_id: froling_kgCounter
   unit_of_measurement: "kg"
 
 - name: "Froling/tCounter"
-  state_topic: froling/tCounter
+  state_topic: /froling/tCounter
   state_class: measurement
   device_class: weight
   unique_id: froling_tCounter
