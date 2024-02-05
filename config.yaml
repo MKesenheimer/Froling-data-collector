@@ -12,3 +12,10 @@ arch:
 host_network: true
 map:
   - share:rw
+#  - homeassistant_config:rw
+#  - addon_config:rw
+#  - ssl:rw
+#  - addons:rw
+#  - backup:rw
+#  - media:rw
+#  - all_addon_config:rw
