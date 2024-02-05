@@ -7,19 +7,22 @@ import os
 import datetime
 #from tabulate import tabulate
 from enum import Enum
+from paho.mqtt import client as mqtt
 
 __prog_name__ = 'Froling data collector'
 __version__ = 0.3
 
-outputdir="/mnt/volumes/usb/frolingdata/"
+outputdir = "."
+client = None
 
 def log(message):
+    global outputdir
     now = datetime.datetime.now()
     date_time = now.strftime("%d.%m.%Y %H:%M:%S: ")
     message = date_time + message
     print(message)
     # write message to file
-    f = open(outputdir+"collection.log", 'a')
+    f = open(outputdir+"/collection.log", 'a')
     f.write(message)
     f.write("\n")
     f.close()
@@ -30,6 +33,7 @@ class Status(Enum):
     SUCCESS = 0
 
 def login(cfg):
+    global outputdir
     log("[+] Logging in...")
     url = "https://connect-api.froeling.com:443/app/v1.0/resources/loginNew"
     headers = {"Content-Type": "application/json", "Connection": "close", "Accept": "*/*", "User-Agent": "Froeling PROD/2107.1 (com.froeling.connect-ios; build:2107.1.01; iOS 15.2.1) Alamofire/4.8.1", "Accept-Language": "en", "Accept-Encoding": "gzip, deflate"}
@@ -37,7 +41,7 @@ def login(cfg):
     response = requests.post(url, headers=headers, json=data)
     bearer = response.headers['Authorization']
 
-    f = open(outputdir+"bearer.txt", "w")
+    f = open(outputdir+"/bearer.txt", "w")
     f.write(bearer)
     f.close()
     if len(bearer) == 0:
@@ -47,10 +51,26 @@ def login(cfg):
         log("[+] Login succeeded.")
         return Status.SUCCESS
 
+def mqttConnect(cfg):
+    global client
+    client = mqtt.Client()
+    client.username_pw_set(cfg.mqttusername, cfg.mqttpassword)
+    client.will_set("/froling/status", "connection failure", qos=1, retain=False)
+    mip, mport = cfg.mqttbroker.split(":")
+    ret = client.connect(mip, int(mport))
+
+def mqttDisconnect(cfg):
+    global client
+    client.disconnect()
+
+def publishMessage(topic, value):
+    global client
+    client.publish(topic, value, qos=1)  
 
 def getFacilityDetails(cfg):
+    global outputdir
     try:
-        f = open(outputdir+"bearer.txt", "r")
+        f = open(outputdir+"/bearer.txt", "r")
         bearer = f.read()
         f.close()
     except:
@@ -190,14 +210,26 @@ def getFacilityDetails(cfg):
             kgCounter['valueText'],
             tCounter['valueText']]
 
+    mqttConnect(cfg)
+    publishMessage("froling/boilerState", boilerState['valueText'])
+    publishMessage("froling/boilerIstTemp", boilerIstTemp['valueText'])
+    publishMessage("froling/vorlaufBeiMinus10", vorlaufBeiMinus10['valueText'])
+    publishMessage("froling/vorlaufBeiPlus10", vorlaufBeiPlus10['valueText'])
+    publishMessage("froling/aktuellerVorlauf", aktuellerVorlauf['valueText'])
+    publishMessage("froling/hkpumpeAktiv", str(int(hkpumpeAktiv['valueText']) * 100))
+    publishMessage("froling/outAirTemp", outAirTemp['valueText'])
+    publishMessage("froling/warmwasserIst", warmwasserIst['valueText'])
+    publishMessage("froling/pufferfuehlerOben", pufferfuehlerOben['valueText'])
+    publishMessage("froling/pufferLadezustand", pufferLadezustand['valueText'])
+    publishMessage("froling/pufferPumpeAnsteuerung", pufferPumpeAnsteuerung['valueText'])
+    publishMessage("froling/kgCounter", kgCounter['valueText'])
+    publishMessage("froling/tCounter", tCounter['valueText'])
+    mqttDisconnect(cfg)
+
     return Status.SUCCESS, header, values
 
 
 def main():
-    pid = os.getpid()
-    with open(outputdir+"process.id", "w") as pidfile:  
-        pidfile.write("{}".format(pid))
-
     parser = argparse.ArgumentParser(description='%s version %.2f' % (__prog_name__, __version__))
     parser.add_argument('-u', '--username',
         action='store',
@@ -220,6 +252,34 @@ def main():
         help='The device ID to use',
         default='')
 
+    parser.add_argument('-o', '--output-dir',
+        action='store',
+        metavar='<outputdir>',
+        dest='outputdir',
+        help='The directory to store the data to.',
+        default='.')
+
+    parser.add_argument('-m', '--mqtt-broker',
+        action='store',
+        metavar='<mqtt-broker-ip:port>',
+        dest='mqttbroker',
+        help='The MQTT broker IP and port. Format: ip:port.',
+        default='127.0.0.1:1883')
+
+    parser.add_argument('-U', '--mqtt-username',
+        action='store',
+        metavar='<mqtt-username>',
+        dest='mqttusername',
+        help='The username to login to the MQTT broker.',
+        default='')
+
+    parser.add_argument('-P', '--mqtt-password',
+        action='store',
+        metavar='<mqtt-password>',
+        dest='mqttpassword',
+        help='The password to login to the MQTT broker.',
+        default='')
+
     parser.add_argument('-i', '--intervall',
         action='store',
         metavar='<intervall>',
@@ -231,6 +291,13 @@ def main():
     cfg = parser.parse_args()
     cfg.prog_name = __prog_name__
 
+    global outputdir
+    outputdir = cfg.outputdir
+
+    pid = os.getpid()
+    with open(outputdir+"/process.id", "w") as pidfile:  
+        pidfile.write("{}".format(pid))
+
     log("[+] Collecting data...")
     status, header, data = getFacilityDetails(cfg)
     #log(",".join(header))
@@ -239,8 +306,8 @@ def main():
     while True:
         status, header, data = getFacilityDetails(cfg)
         if status == Status.LOGIN_FAILED:
-            log("[-] Login failed. Trying again in 60s.")
-            time.sleep(60)
+            log("[-] Login failed. Trying again in 5s.")
+            time.sleep(5)
             login(cfg)
 
         elif status != Status.ERROR:
@@ -248,13 +315,13 @@ def main():
                 log("[+] Continuing collecting data.")
         
             # write data to file
-            if os.path.isfile(outputdir+"data.csv"):
-                f = open(outputdir+"data.csv", 'a')
+            if os.path.isfile(outputdir+"/data.csv"):
+                f = open(outputdir+"/data.csv", 'a')
                 f.write(",".join(data))
                 f.write("\n")
                 f.close()
             else:
-                f = open(outputdir+"data.csv", 'w')
+                f = open(outputdir+"/data.csv", 'w')
                 f.write(",".join(header))
                 f.write("\n")
                 f.write(",".join(data))
