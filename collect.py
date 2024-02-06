@@ -235,7 +235,7 @@ def getFacilityDetails(cfg):
     # TODO: erzeugte Energie der Solaranlage berechnen
 
     # verbrauchte Energie des Kessels
-    pelletZaehler = kgCounter['valueText'] + tCounter['valueText'] * 1000
+    pelletZaehler = float(kgCounter['valueText']) + float(tCounter['valueText']) * 1000
     # verbrauchte Energie des Kessels in Wh
     energieKessel = pPelletsEnergiedichte * pelletZaehler
 
