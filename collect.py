@@ -232,7 +232,9 @@ def getFacilityDetails(cfg):
     literProStunde = 400 * float(kollektorPumpe['valueText']) / 100
     deltaT1 = float(kollektorTemp['valueText']) - float(pufferfuehlerUnten['valueText'])
     leistungSolar = pEnergiedichte * literProStunde * deltaT1
+    # erzeugte Energie des Solarkollektors
     # TODO: erzeugte Energie der Solaranlage berechnen
+    energieSolar = 100
 
     # verbrauchte Energie des Kessels
     pelletZaehler = float(kgCounter['valueText']) + float(tCounter['valueText']) * 1000
@@ -257,6 +259,7 @@ def getFacilityDetails(cfg):
     publishMessage("/froling/kollektorPumpe", kollektorPumpe['valueText'])
     publishMessage("/froling/leistungSolar", leistungSolar)
     publishMessage("/froling/pelletZaehler", pelletZaehler)
+    publishMessage("/froling/energieSolar", energieSolar)
     publishMessage("/froling/energieKessel", energieKessel)
     mqttDisconnect()
 

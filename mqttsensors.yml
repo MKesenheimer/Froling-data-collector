@@ -1,9 +1,6 @@
 - name: "Froling/boilerState"
   state_topic: /froling/boilerState
-  #state_class: measurement
-  #device_class: energy
   unique_id: froling_boilerState
-  #unit_of_measurement: "kWh"
 
 - name: "Froling/boilerIstTemp"
   state_topic: /froling/boilerIstTemp
@@ -110,9 +107,17 @@
   unique_id: froling_leistungSolar
   unit_of_measurement: "W"
 
+- name: "Froling/energieSolar"
+  state_topic: /froling/energieSolar
+  value_template: "{{ 'unavailable' if float(value) <= 0 else value }}"
+  state_class: total_increasing
+  device_class: energy
+  unique_id: froling_energiesolar
+  unit_of_measurement: "W"
+
 - name: "Froling/energieKessel"
   state_topic: /froling/energieKessel
-  value_template: "{{ 'unavailable' if states(froling_energiekessel) == 0 else states(froling_energieKessel) }}"
+  value_template: "{{ 'unavailable' if float(value) <= 0 else value }}"
   state_class: total_increasing
   device_class: energy
   unique_id: froling_energiekessel
