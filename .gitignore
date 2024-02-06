@@ -5,3 +5,4 @@ bearer.txt
 *.json
 *.log
 process.id
+*.val

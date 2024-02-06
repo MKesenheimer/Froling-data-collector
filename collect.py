@@ -20,6 +20,8 @@ client = None
 pEnergiedichte = 1.16
 # Puffervolumen, das ist der Teil des Wassers im Heizkreis, aus dem die Wärme entnommen wird
 gesamtVolumen = 1000
+energieSolar = 0
+lastTime = 0
 
 # Energiedichte von Pellets in Wh/kg
 pPelletsEnergiedichte = 4800
@@ -231,10 +233,25 @@ def getFacilityDetails(cfg):
     # Fördermenge der Pumpe, [l / h]
     literProStunde = 400 * float(kollektorPumpe['valueText']) / 100
     deltaT1 = float(kollektorTemp['valueText']) - float(pufferfuehlerUnten['valueText'])
+
+    # Leistung der Solaranlage
+    global energieSolar
     leistungSolar = pEnergiedichte * literProStunde * deltaT1
+
     # erzeugte Energie des Solarkollektors
-    # TODO: erzeugte Energie der Solaranlage berechnen
-    energieSolar = 100
+    global lastTime
+    time = datetime.datetime.now()
+    duration_in_h = 0
+    if lastTime != 0:
+        duration = time - lastTime
+        duration_in_h = duration.total_seconds() / 3600
+    lastTime = time
+    energieSolar += leistungSolar * duration_in_h
+    #log(f"[+] Solar Energie: {energieSolar} Wh")
+    with open(outputdir + "/energieSolar.val", "w") as f:  
+        f.write(f"{energieSolar}")
+        f.close()
+
 
     # verbrauchte Energie des Kessels
     pelletZaehler = float(kgCounter['valueText']) + float(tCounter['valueText']) * 1000
@@ -242,26 +259,27 @@ def getFacilityDetails(cfg):
     energieKessel = pPelletsEnergiedichte * pelletZaehler
 
     # publish all values
-    mqttConnect(cfg)
-    publishMessage("/froling/boilerState", boilerState['valueText'])
-    publishMessage("/froling/boilerIstTemp", boilerIstTemp['valueText'])
-    publishMessage("/froling/vorlaufBeiMinus10", vorlaufBeiMinus10['valueText'])
-    publishMessage("/froling/vorlaufBeiPlus10", vorlaufBeiPlus10['valueText'])
-    publishMessage("/froling/aktuellerVorlauf", aktuellerVorlauf['valueText'])
-    publishMessage("/froling/hkpumpeAktiv", str(int(hkpumpeAktiv['valueText']) * 100))
-    publishMessage("/froling/outAirTemp", outAirTemp['valueText'])
-    publishMessage("/froling/warmwasserIst", warmwasserIst['valueText'])
-    publishMessage("/froling/pufferfuehlerOben", pufferfuehlerOben['valueText'])
-    publishMessage("/froling/pufferfuehlerUnten", pufferfuehlerUnten['valueText'])
-    publishMessage("/froling/pufferLadezustand", pufferLadezustand['valueText'])
-    publishMessage("/froling/pufferPumpeAnsteuerung", pufferPumpeAnsteuerung['valueText'])
-    publishMessage("/froling/kollektorTemp", kollektorTemp['valueText'])
-    publishMessage("/froling/kollektorPumpe", kollektorPumpe['valueText'])
-    publishMessage("/froling/leistungSolar", leistungSolar)
-    publishMessage("/froling/pelletZaehler", pelletZaehler)
-    publishMessage("/froling/energieSolar", energieSolar)
-    publishMessage("/froling/energieKessel", energieKessel)
-    mqttDisconnect()
+    if cfg.mqttbroker != '':
+        mqttConnect(cfg)
+        publishMessage("/froling/boilerState", boilerState['valueText'])
+        publishMessage("/froling/boilerIstTemp", boilerIstTemp['valueText'])
+        publishMessage("/froling/vorlaufBeiMinus10", vorlaufBeiMinus10['valueText'])
+        publishMessage("/froling/vorlaufBeiPlus10", vorlaufBeiPlus10['valueText'])
+        publishMessage("/froling/aktuellerVorlauf", aktuellerVorlauf['valueText'])
+        publishMessage("/froling/hkpumpeAktiv", str(int(hkpumpeAktiv['valueText']) * 100))
+        publishMessage("/froling/outAirTemp", outAirTemp['valueText'])
+        publishMessage("/froling/warmwasserIst", warmwasserIst['valueText'])
+        publishMessage("/froling/pufferfuehlerOben", pufferfuehlerOben['valueText'])
+        publishMessage("/froling/pufferfuehlerUnten", pufferfuehlerUnten['valueText'])
+        publishMessage("/froling/pufferLadezustand", pufferLadezustand['valueText'])
+        publishMessage("/froling/pufferPumpeAnsteuerung", pufferPumpeAnsteuerung['valueText'])
+        publishMessage("/froling/kollektorTemp", kollektorTemp['valueText'])
+        publishMessage("/froling/kollektorPumpe", kollektorPumpe['valueText'])
+        publishMessage("/froling/leistungSolar", leistungSolar)
+        publishMessage("/froling/pelletZaehler", pelletZaehler)
+        publishMessage("/froling/energieSolar", energieSolar)
+        publishMessage("/froling/energieKessel", energieKessel)
+        mqttDisconnect()
 
     return Status.SUCCESS, header, values
 
@@ -301,7 +319,7 @@ def main():
         metavar='<mqtt-broker-ip:port>',
         dest='mqttbroker',
         help='The MQTT broker IP and port. Format: ip:port.',
-        default='127.0.0.1:1883')
+        default='')
 
     parser.add_argument('-U', '--mqtt-username',
         action='store',
@@ -333,10 +351,18 @@ def main():
 
     pid = os.getpid()
     with open(outputdir + "/process.id", "w") as pidfile:  
-        pidfile.write("{}".format(pid))
+        pidfile.write(f"{pid}")
+        pidfile.close()
 
-    # mqtt
-    #mqttConnect(cfg)
+    # get last energy value
+    global energieSolar
+    try:
+        f = open(outputdir + "/energieSolar.val", "r")
+        energieSolar = float(f.read())
+        f.close()
+    except:
+        energieSolar = 0.0
+    log(f"[+] Restored solar energy value: {energieSolar} Wh")
 
     log("[+] Collecting data...")
     status, header, data = getFacilityDetails(cfg)

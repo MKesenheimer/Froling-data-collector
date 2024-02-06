@@ -1,121 +1,124 @@
-- name: "Froling/boilerState"
+- name: "Froling/Boilerstatus"
   state_topic: /froling/boilerState
+  #state_class: measurement
+  #device_class: energy
   unique_id: froling_boilerState
+  #unit_of_measurement: "kWh"
 
-- name: "Froling/boilerIstTemp"
+- name: "Froling/Boilertemperatur"
   state_topic: /froling/boilerIstTemp
   state_class: measurement
   device_class: temperature
   unique_id: froling_boilerIstTemp
   unit_of_measurement: "°C"
 
-- name: "Froling/vorlaufBeiMinus10"
+- name: "Froling/Vorlauftemperatur bei -10°C"
   state_topic: /froling/vorlaufBeiMinus10
   state_class: measurement
   device_class: temperature
   unique_id: froling_vorlaufBeiMinus10
   unit_of_measurement: "°C"
 
-- name: "Froling/vorlaufBeiPlus10"
+- name: "Froling/Vorlauftemperatur bei +10°C"
   state_topic: /froling/vorlaufBeiPlus10
   state_class: measurement
   device_class: temperature
   unique_id: froling_vorlaufBeiPlus10
   unit_of_measurement: "°C"
 
-- name: "Froling/aktuellerVorlauf"
+- name: "Froling/Vorlauftemperatur"
   state_topic: /froling/aktuellerVorlauf
   state_class: measurement
   device_class: temperature
   unique_id: froling_aktuellerVorlauf
   unit_of_measurement: "°C"
 
-- name: "Froling/hkpumpeAktiv"
+- name: "Froling/Heizkreispumpe Aktiv"
   state_topic: /froling/hkpumpeAktiv
   state_class: measurement
   device_class: water
   unique_id: froling_hkpumpeAktiv
   unit_of_measurement: "%"
 
-- name: "Froling/outAirTemp"
+- name: "Froling/Aussentemperatur"
   state_topic: /froling/outAirTemp
   state_class: measurement
   device_class: temperature
   unique_id: froling_outAirTemp
   unit_of_measurement: "°C"
 
-- name: "Froling/warmwasserIst"
+- name: "Froling/Warmwassertemperatur Ist"
   state_topic: /froling/warmwasserIst
   state_class: measurement
   device_class: temperature
   unique_id: froling_warmwasserIst
   unit_of_measurement: "°C"
 
-- name: "Froling/pufferfuehlerOben"
+- name: "Froling/Puffertemperatur Fuehler oben"
   state_topic: /froling/pufferfuehlerOben
   state_class: measurement
   device_class: temperature
   unique_id: froling_pufferfuehlerOben
   unit_of_measurement: "°C"
 
-- name: "Froling/pufferfuehlerUnten"
+- name: "Froling/Puffertemperatur Fuehler unten"
   state_topic: /froling/pufferfuehlerUnten
   state_class: measurement
   device_class: temperature
   unique_id: froling_pufferfuehlerUnten
   unit_of_measurement: "°C"
 
-- name: "Froling/pufferLadezustand"
+- name: "Froling/Puffer Ladezustand"
   state_topic: /froling/pufferLadezustand
   state_class: measurement
   device_class: water
   unique_id: froling_pufferLadezustand
   unit_of_measurement: "%"
 
-- name: "Froling/pufferPumpeAnsteuerung"
+- name: "Froling/Pufferpumpe Ansteuerung"
   state_topic: /froling/pufferPumpeAnsteuerung
   state_class: measurement
   device_class: water
   unique_id: froling_pufferPumpeAnsteuerung
   unit_of_measurement: "%"
 
-- name: "Froling/pelletZaehler"
+- name: "Froling/Pelletzaehler"
   state_topic: /froling/pelletZaehler
   state_class: measurement
   device_class: weight
   unique_id: froling_pelletZaehler
   unit_of_measurement: "kg"
 
-- name: "Froling/kollektorTemp"
+- name: "Froling/Kollektor Temperatur"
   state_topic: /froling/kollektorTemp
   state_class: measurement
   device_class: temperature
   unique_id: froling_kollektorTemp
   unit_of_measurement: "°C"
 
-- name: "Froling/kollektorPumpe"
+- name: "Froling/Kollektorpumpe Ansteuerung"
   state_topic: /froling/kollektorPumpe
   state_class: measurement
   device_class: water
   unique_id: froling_kollektorPumpe
   unit_of_measurement: "%"
 
-- name: "Froling/leistungSolar"
+- name: "Froling/Solar Power"
   state_topic: /froling/leistungSolar
   state_class: measurement
   device_class: power
   unique_id: froling_leistungSolar
   unit_of_measurement: "W"
 
-- name: "Froling/energieSolar"
+- name: "Froling/Solar Total Production"
   state_topic: /froling/energieSolar
   value_template: "{{ 'unavailable' if float(value) <= 0 else value }}"
   state_class: total_increasing
   device_class: energy
   unique_id: froling_energiesolar
-  unit_of_measurement: "W"
+  unit_of_measurement: "Wh"
 
-- name: "Froling/energieKessel"
+- name: "Froling/Kessel Total Energy"
   state_topic: /froling/energieKessel
   value_template: "{{ 'unavailable' if float(value) <= 0 else value }}"
   state_class: total_increasing
