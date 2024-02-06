@@ -230,7 +230,7 @@ def getFacilityDetails(cfg):
             tCounter['valueText']]
 
     # derived values
-    # Fördermenge der Pumpe, [l / h]
+    # Fördermenge der Pumpe, [l / h]. TODO: ist 400 l / h gut geschätzt?
     literProStunde = 400 * float(kollektorPumpe['valueText']) / 100
     deltaT1 = float(kollektorTemp['valueText']) - float(pufferfuehlerUnten['valueText'])
 
@@ -246,7 +246,7 @@ def getFacilityDetails(cfg):
         duration = time - lastTime
         duration_in_h = duration.total_seconds() / 3600
     lastTime = time
-    energieSolar += leistungSolar * duration_in_h
+    energieSolar += leistungSolar * duration_in_h # (leistungSolar * duration_in_h if leistungSolar >= 0 else 0)
     #log(f"[+] Solar Energie: {energieSolar} Wh")
     with open(outputdir + "/energieSolar.val", "w") as f:  
         f.write(f"{energieSolar}")
