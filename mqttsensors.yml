@@ -61,6 +61,13 @@
   unique_id: froling_pufferfuehlerOben
   unit_of_measurement: "°C"
 
+- name: "Froling/pufferfuehlerUnten"
+  state_topic: /froling/pufferfuehlerUnten
+  state_class: measurement
+  device_class: temperature
+  unique_id: froling_pufferfuehlerUnten
+  unit_of_measurement: "°C"
+
 - name: "Froling/pufferLadezustand"
   state_topic: /froling/pufferLadezustand
   state_class: measurement
@@ -75,16 +82,38 @@
   unique_id: froling_pufferPumpeAnsteuerung
   unit_of_measurement: "%"
 
-- name: "Froling/kgCounter"
-  state_topic: /froling/kgCounter
+- name: "Froling/pelletZaehler"
+  state_topic: /froling/pelletZaehler
   state_class: measurement
   device_class: weight
-  unique_id: froling_kgCounter
+  unique_id: froling_pelletZaehler
   unit_of_measurement: "kg"
 
-- name: "Froling/tCounter"
-  state_topic: /froling/tCounter
+- name: "Froling/kollektorTemp"
+  state_topic: /froling/kollektorTemp
   state_class: measurement
-  device_class: weight
-  unique_id: froling_tCounter
-  unit_of_measurement: "t"
+  device_class: temperature
+  unique_id: froling_kollektorTemp
+  unit_of_measurement: "°C"
+
+- name: "Froling/kollektorPumpe"
+  state_topic: /froling/kollektorPumpe
+  state_class: measurement
+  device_class: water
+  unique_id: froling_kollektorPumpe
+  unit_of_measurement: "%"
+
+- name: "Froling/leistungSolar"
+  state_topic: /froling/leistungSolar
+  state_class: measurement
+  device_class: power
+  unique_id: froling_leistungSolar
+  unit_of_measurement: "W"
+
+- name: "Froling/energieKessel"
+  state_topic: /froling/energieKessel
+  value_template: "{{ 'unavailable' if states(froling_energiekessel) == 0 else states(froling_energieKessel) }}"
+  state_class: total_increasing
+  device_class: energy
+  unique_id: froling_energiekessel
+  unit_of_measurement: "Wh"

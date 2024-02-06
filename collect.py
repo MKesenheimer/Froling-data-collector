@@ -21,6 +21,9 @@ pEnergiedichte = 1.16
 # Puffervolumen, das ist der Teil des Wassers im Heizkreis, aus dem die Wärme entnommen wird
 gesamtVolumen = 1000
 
+# Energiedichte von Pellets in Wh/kg
+pPelletsEnergiedichte = 4800
+
 # MQTT
 QOS = 1
 
@@ -224,6 +227,19 @@ def getFacilityDetails(cfg):
             kgCounter['valueText'],
             tCounter['valueText']]
 
+    # derived values
+    # Fördermenge der Pumpe, [l / h]
+    literProStunde = 400 * float(kollektorPumpe['valueText']) / 100
+    deltaT1 = float(kollektorTemp['valueText']) - float(pufferfuehlerUnten['valueText'])
+    leistungSolar = pEnergiedichte * literProStunde * deltaT1
+    # TODO: erzeugte Energie der Solaranlage berechnen
+
+    # verbrauchte Energie des Kessels
+    pelletZaehler = kgCounter['valueText'] + tCounter['valueText'] * 1000
+    # verbrauchte Energie des Kessels in Wh
+    energieKessel = pPelletsEnergiedichte * pelletZaehler
+
+    # publish all values
     mqttConnect(cfg)
     publishMessage("/froling/boilerState", boilerState['valueText'])
     publishMessage("/froling/boilerIstTemp", boilerIstTemp['valueText'])
@@ -234,10 +250,14 @@ def getFacilityDetails(cfg):
     publishMessage("/froling/outAirTemp", outAirTemp['valueText'])
     publishMessage("/froling/warmwasserIst", warmwasserIst['valueText'])
     publishMessage("/froling/pufferfuehlerOben", pufferfuehlerOben['valueText'])
+    publishMessage("/froling/pufferfuehlerUnten", pufferfuehlerUnten['valueText'])
     publishMessage("/froling/pufferLadezustand", pufferLadezustand['valueText'])
     publishMessage("/froling/pufferPumpeAnsteuerung", pufferPumpeAnsteuerung['valueText'])
-    publishMessage("/froling/kgCounter", kgCounter['valueText'])
-    publishMessage("/froling/tCounter", tCounter['valueText'])
+    publishMessage("/froling/kollektorTemp", kollektorTemp['valueText'])
+    publishMessage("/froling/kollektorPumpe", kollektorPumpe['valueText'])
+    publishMessage("/froling/leistungSolar", leistungSolar)
+    publishMessage("/froling/pelletZaehler", pelletZaehler)
+    publishMessage("/froling/energieKessel", energieKessel)
     mqttDisconnect()
 
     return Status.SUCCESS, header, values
