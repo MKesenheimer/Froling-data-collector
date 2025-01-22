@@ -36,7 +36,7 @@ RUN chmod a+x /home/user/froling-data-collector/run.sh
 #USER user
 
 # make sure all messages always reach console
-#ENV PYTHONUNBUFFERED=1
+ENV PYTHONUNBUFFERED=1
 
 # activate virtual environment
 ENV VIRTUAL_ENV=/home/user/froling-data-collector/venv
